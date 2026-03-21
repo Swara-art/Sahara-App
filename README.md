@@ -291,7 +291,7 @@ sahara/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/sahara.git
+git clone https://github.com/swara.art/sahara.git
 cd sahara
 ```
 
@@ -311,7 +311,7 @@ pip install -r requirements.txt
 ### 4. Run the Backend Server
 
 ```bash
-uvicorn backend.main:app --reload
+uvicorn app.main:app --reload
 ```
 
 ### 5. Open the Frontend
