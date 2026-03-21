@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAHARA - E-Governance Platform</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!--<script src="/_sdk/element_sdk.js"></script> -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;family=Playfair+Display:wght@600;700;800&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { 50:'#f0f3f9', 100:'#dce3f0', 200:'#b8c7e1', 300:'#8da5cd', 400:'#5d7fb5', 500:'#3d5f9a', 600:'#1a3a6b', 700:'#142d54', 800:'#0f2140', 900:'#0a1628' },
+            accent: { 50:'#fff7ed', 100:'#ffedd5', 200:'#fed7aa', 300:'#fdba74', 400:'#fb923c', 500:'#f97316', 600:'#ea580c', 700:'#c2410c' },
+            civic: { 50:'#f0fdf4', 100:'#dcfce7', 200:'#bbf7d0', 300:'#86efac', 400:'#4ade80', 500:'#22c55e', 600:'#16a34a', 700:'#15803d' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .slide-up { animation: slideUp 0.5s ease-out; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+    .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(26,58,107,0.12); }
+    .status-submitted { background:#e5e7eb; color:#374151; }
+    .status-verified { background:#dbeafe; color:#1d4ed8; }
+    .status-in-progress { background:#fed7aa; color:#c2410c; }
+    .status-resolved { background:#dcfce7; color:#15803d; }
+    .status-closed { background:#d1d5db; color:#1f2937; }
+    .star-rating i { cursor:pointer; transition:color 0.15s; }
+    .hamburger-line { transition: all 0.3s; }
+    .mobile-menu { transition: max-height 0.3s ease, opacity 0.3s ease; max-height:0; opacity:0; overflow:hidden; }
+    .mobile-menu.open { max-height:400px; opacity:1; }
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-thumb { background:#b8c7e1; border-radius:3px; }
+    .tracker-step { position:relative; }
+    .tracker-step.active .tracker-dot { background:#1a3a6b; border-color:#1a3a6b; }
+    .tracker-step.active .tracker-dot svg { color:white; }
+    .tracker-step.completed .tracker-dot { background:#22c55e; border-color:#22c55e; }
+    .tracker-step.completed .tracker-dot svg { color:white; }
+    .tracker-step .tracker-dot { width:40px; height:40px; border-radius:50%; border:3px solid #d1d5db; background:white; display:flex; align-items:center; justify-content:center; transition:all 0.3s; }
+    .tracker-line { height:3px; flex:1; background:#d1d5db; transition:background 0.3s; }
+    .tracker-line.completed { background:#22c55e; }
+    .tracker-line.active { background:#1a3a6b; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ <!-- <script src="/_sdk/data_sdk.js" type="text/javascript"></script> -->
+ </head>
+ <body class="h-full bg-navy-50 text-navy-800">
+  <div id="app" class="w-full h-full overflow-auto">
+   <!-- NAVBAR -->
+   <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-navy-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+     <div class="flex items-center justify-between h-16">
+      <a href="#" onclick="navigate('landing');return false;" class="flex items-center gap-2">
+       <div class="w-9 h-9 rounded-lg bg-navy-600 flex items-center justify-center">
+        <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" /><circle cx="12" cy="10" r="1" /><circle cx="8" cy="13" r="1" /><circle cx="16" cy="13" r="1" />
+        </svg>
+       </div><span class="font-display font-bold text-xl text-navy-700">SAHARA</span> </a>
+      <div class="hidden md:flex items-center gap-1">
+       <a href="#" onclick="navigate('landing');return false;" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-navy-600 hover:bg-navy-50 transition">Home</a> <a href="#" onclick="navigate('report');return false;" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-navy-600 hover:bg-navy-50 transition">Report Issue</a> 
+       <a href="#" onclick="navigate('community');return false;" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-navy-600 hover:bg-navy-50 transition">Community</a> 
+       <div id="authLinks" class="flex items-center gap-1"></div>
+      </div><button id="hamburger" onclick="toggleMobile()" class="md:hidden p-2 rounded-lg hover:bg-navy-50"> <i data-lucide="menu" class="w-6 h-6 text-navy-700"></i> </button>
+     </div>
+     <div id="mobileMenu" class="mobile-menu md:hidden">
+      <div class="py-3 space-y-1 border-t border-navy-100">
+       <a href="#" onclick="navigate('landing');toggleMobile();return false;" class="block px-4 py-2.5 rounded-lg text-sm font-medium text-navy-600 hover:bg-navy-50">Home</a> 
+       <a href="#" onclick="navigate('report');toggleMobile();return false;" class="block px-4 py-2.5 rounded-lg text-sm font-medium text-navy-600 hover:bg-navy-50">Report Issue</a>
+        <a href="#" onclick="navigate('community');toggleMobile();return false;" class="block px-4 py-2.5 rounded-lg text-sm font-medium text-navy-600 hover:bg-navy-50">Community</a>
+        <div id="mobileAuthLinks"></div>
+      </div>
+     </div>
+    </div>
+   </nav><!-- MAIN CONTENT -->
+   <main id="mainContent" class="pt-16 min-h-full"></main>
+  </div>
+  <script>
+// ========== DATA ==========
+let ISSUES = [];
+const SEED_ISSUES = [
+  { id:'ISS-001', title:'Pothole on MG Road near Central Mall', description:'Large pothole approximately 2 feet wide causing traffic disruption and risk of accidents. Multiple vehicles have been damaged. The pothole has been growing over the past 2 weeks due to recent rains.', category:'Roads / Potholes', location:'MG Road, Sector 12', upvotes:47, status:'In Progress', createdAt:'2025-01-15', resolutionNotes:'Road repair team dispatched. Expected completion by Jan 30.' },
+  { id:'ISS-002', title:'Overflowing garbage bins at Market Square', description:'Garbage bins near the vegetable market have not been cleared for 5 days. The stench is unbearable and attracting stray animals. Health hazard for nearby residents and shopkeepers.', category:'Garbage / Sanitation', location:'Market Square, Zone A', upvotes:35, status:'Verified', createdAt:'2025-01-18', resolutionNotes:'' },
+  { id:'ISS-003', title:'No water supply for 3 consecutive days', description:'Residents of Block C have not received municipal water supply for 3 days. The water tanker has also not arrived despite multiple complaints. Families are forced to buy bottled water.', category:'Water Supply', location:'Block C, Residential Colony', upvotes:62, status:'Submitted', createdAt:'2025-01-20', resolutionNotes:'' },
+  { id:'ISS-004', title:'Broken streetlights on Park Avenue', description:'5 streetlights on Park Avenue are non-functional for over a week. The area becomes very dark after sunset creating safety concerns, especially for women and elderly.', category:'Streetlights', location:'Park Avenue, Ward 7', upvotes:28, status:'Resolved', createdAt:'2025-01-10', resolutionNotes:'All 5 streetlights replaced with new LED fixtures on Jan 16.' },
+  { id:'ISS-005', title:'Illegal parking blocking pedestrian path', description:'Vehicles are regularly parked on the pedestrian walkway near the school, forcing pedestrians including children to walk on the road. Very dangerous during school hours.', category:'Public Safety', location:'School Road, Sector 5', upvotes:19, status:'Closed', createdAt:'2025-01-05', resolutionNotes:'No-parking signage installed and regular patrol assigned. Issue resolved.' },
+  { id:'ISS-006', title:'Sewage overflow near residential area', description:'Open sewage drain is overflowing near the residential blocks. The contaminated water is spreading across the road and into nearby houses. Urgent cleaning required.', category:'Garbage / Sanitation', location:'Lane 4, Sector 9', upvotes:53, status:'In Progress', createdAt:'2025-01-17', resolutionNotes:'Sanitation team assigned. Drain cleaning in progress.' },
+  { id:'ISS-007', title:'Damaged road divider causing accidents', description:'The road divider near the highway junction has been damaged by a truck collision. Sharp metal pieces are exposed and pose danger to two-wheeler riders.', category:'Roads / Potholes', location:'Highway Junction, NH-48', upvotes:41, status:'Verified', createdAt:'2025-01-19', resolutionNotes:'' },
+  { id:'ISS-008', title:'Stray dog menace in residential colony', description:'Pack of stray dogs has become aggressive in the colony, especially at night. Two children were chased last week. Animal control needs to intervene.', category:'Public Safety', location:'Green Park Colony', upvotes:33, status:'Submitted', createdAt:'2025-01-21', resolutionNotes:'' }
+];
+
+const STATUSES = ['Submitted','Verified','In Progress','Resolved','Closed'];
+const CATEGORIES = ['Roads / Potholes','Garbage / Sanitation','Water Supply','Streetlights','Public Safety','Other'];
+
+let currentPage = 'landing';
+let selectedIssue = null;
+let feedbackRating = 0;
+let pieChart = null;
+let barChart = null;
+
+// ========== DATA SDK HANDLER ==========
+const dataHandler = {
+  onDataChanged(data) {
+    ISSUES = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Re-render current page if needed
+    if (currentPage && document.getElementById('mainContent')) {
+      const main = document.getElementById('mainContent');
+      if (main.innerHTML) renderCurrentPage();
+    }
+  }
+};
+
+async function initializeData() {
+  try {
+    if (window.dataSdk) {
+      const initResult = await window.dataSdk.init(dataHandler);
+      if (!initResult.isOk) throw new Error();
+    } else {
+      throw new Error();
+    }
+  } catch (e) {
+    console.log("Using local data fallback");
+    ISSUES = SEED_ISSUES;
+  }
+}
+
+function renderCurrentPage() {
+  const main = document.getElementById('mainContent');
+  switch(currentPage) {
+    case 'landing': renderLanding(main); break;
+    case 'dashboard': renderDashboard(main); break;
+    case 'report': renderReport(main); break;
+    case 'community': renderCommunity(main); break;
+    case 'details': renderDetails(main); break;
+    case 'admin': renderAdmin(main); break;
+    case 'feedback': renderFeedback(main); break;
+    case 'login': renderLogin(main); break;
+  }
+  lucide.createIcons();
+  renderAuthLinks();
+}
+
+function renderAuthLinks() {
+  const user = JSON.parse(localStorage.getItem('sahara_currentUser') || 'null');
+
+  const authDiv = document.getElementById('authLinks');
+  const mobileAuthDiv = document.getElementById('mobileAuthLinks');
+
+  if (!authDiv || !mobileAuthDiv) return;
+
+  if (user) {
+    authDiv.innerHTML = `
+      <span class="px-3 text-sm text-navy-600">Hi, ${user.name}</span>
+      <button onclick="logout()" class="px-4 py-2 text-sm bg-red-100 text-red-600 rounded-lg">Logout</button>
+    `;
+
+    mobileAuthDiv.innerHTML = `
+      <button onclick="logout()" class="block px-4 py-2 text-sm text-red-600">Logout</button>
+    `;
+  } else {
+    authDiv.innerHTML = `
+      <button onclick="navigate('login')" class="px-4 py-2 text-sm bg-navy-600 text-white rounded-lg">Login</button>
+    `;
+
+    mobileAuthDiv.innerHTML = `
+      <button onclick="navigate('login');toggleMobile()" class="block px-4 py-2 text-sm text-navy-600">Login</button>
+    `;
+  }
+}
+function logout() {
+  localStorage.removeItem('sahara_currentUser');
+  showToast("Logged out successfully", "success");
+  renderAuthLinks();
+  navigate('landing');
+}
+// ========== NAVIGATION ==========
+function navigate(page, data) {
+  const user = JSON.parse(localStorage.getItem('sahara_currentUser') || 'null');
+
+  // 🔒 protected pages
+  const protectedPages = ['report', 'dashboard', 'admin'];
+
+  if (!user && protectedPages.includes(page)) {
+    showToast("Please login first", "error");
+    currentPage = 'login';
+  } else {
+    currentPage = page;
+  }
+
+  if (data) selectedIssue = data;
+
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '';
+  window.scrollTo(0, 0);
+  renderCurrentPage();
+}
+
+function toggleMobile() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+function getStatusClass(s) {
+  const m = { 'Submitted':'status-submitted','Verified':'status-verified','In Progress':'status-in-progress','Resolved':'status-resolved','Closed':'status-closed' };
+  return m[s] || 'status-submitted';
+}
+
+function issueCard(issue, showActions=true) {
+  return `
+  <div class="bg-white rounded-2xl border border-navy-100 p-5 card-hover fade-in">
+    <div class="flex items-start justify-between mb-3">
+      <span class="text-xs font-semibold px-3 py-1 rounded-full ${getStatusClass(issue.status)}">${issue.status}</span>
+      <span class="text-xs text-navy-400">${issue.createdAt}</span>
+    </div>
+    <h3 class="font-semibold text-navy-800 mb-2 leading-snug">${issue.title}</h3>
+    <div class="flex flex-wrap gap-2 mb-3">
+      <span class="text-xs bg-navy-50 text-navy-500 px-2.5 py-1 rounded-full flex items-center gap-1"><i data-lucide="tag" class="w-3 h-3"></i>${issue.category}</span>
+      <span class="text-xs bg-navy-50 text-navy-500 px-2.5 py-1 rounded-full flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i>${issue.location}</span>
+    </div>
+    <div class="flex items-center justify-between pt-3 border-t border-navy-50">
+      <button onclick="upvoteIssue('${issue.id}')" class="flex items-center gap-1.5 text-sm font-medium text-accent-600 hover:text-accent-700 transition">
+        <i data-lucide="arrow-big-up" class="w-5 h-5"></i>
+        <span id="upvote-${issue.id}">${issue.upvotes}</span>
+      </button>
+      ${showActions ? `<button onclick="navigate('details',ISSUES.find(i=>i.id==='${issue.id}'))" class="text-sm font-medium text-navy-600 hover:text-navy-800 flex items-center gap-1 transition"><i data-lucide="eye" class="w-4 h-4"></i>View Details</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function upvoteIssue(id) {
+  const issue = ISSUES.find(i => i.id === id);
+  if (issue) {
+    issue.upvotes++;
+    const el = document.getElementById('upvote-' + id);
+    if (el) { el.textContent = issue.upvotes; el.classList.add('scale-110'); setTimeout(() => el.classList.remove('scale-110'), 200); }
+    // Update in Data SDK
+    const updateResult = window.dataSdk.update(issue);
+    if (updateResult.isError) console.error('Failed to update upvotes:', updateResult.error);
+  }
+}
+
+// ========== LANDING PAGE ==========
+function renderLanding(container) {
+  const cfg = window.elementSdk ? window.elementSdk.config : {};
+  const heroTitle = cfg.hero_title || 'SAHARA – Your Voice for a Better Community';
+  const heroSub = cfg.hero_subtitle || 'Report and track civic issues in your locality.';
+  const tagline = cfg.platform_tagline || 'Support and Assistance for Harmonized Administrative Response and Action';
+
+  container.innerHTML = `
+  <!-- Hero -->
+  <section class="relative overflow-hidden bg-gradient-to-br from-navy-700 via-navy-600 to-navy-800 text-white">
+    <div class="absolute inset-0 opacity-10">
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)"/></svg>
+    </div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
+      <div class="max-w-3xl slide-up">
+        <p class="text-accent-300 text-sm font-semibold tracking-widest uppercase mb-4" id="landing-tagline">${tagline}</p>
+        <h1 class="font-display text-4xl md:text-6xl font-bold mb-6 leading-tight" id="landing-hero-title">${heroTitle}</h1>
+        <p class="text-lg md:text-xl text-navy-200 mb-10 max-w-2xl" id="landing-hero-sub">${heroSub}</p>
+        <div class="flex flex-wrap gap-4">
+          <button onclick="navigate('report')" class="px-8 py-3.5 bg-accent-500 hover:bg-accent-600 text-white font-semibold rounded-full shadow-lg shadow-accent-500/30 transition flex items-center gap-2"><i data-lucide="alert-circle" class="w-5 h-5"></i>Report an Issue</button>
+          <button onclick="navigate('community')" class="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-full border border-white/20 transition flex items-center gap-2"><i data-lucide="users" class="w-5 h-5"></i>View Community Issues</button>
+        </div>
+      </div>
+      <div class="absolute right-0 top-1/2 -translate-y-1/2 hidden lg:block opacity-20">
+        <svg width="300" height="300" viewBox="0 0 200 200"><circle cx="100" cy="100" r="80" fill="none" stroke="white" stroke-width="1"/><circle cx="100" cy="100" r="60" fill="none" stroke="white" stroke-width="0.5"/><circle cx="100" cy="100" r="40" fill="none" stroke="white" stroke-width="0.5"/><path d="M100 20 L100 180 M20 100 L180 100" stroke="white" stroke-width="0.5"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <div class="text-center mb-14">
+      <h2 class="font-display text-3xl md:text-4xl font-bold text-navy-800 mb-3">Why Choose SAHARA?</h2>
+      <p class="text-navy-400 max-w-xl mx-auto">Empowering citizens with tools for transparent and effective civic engagement</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      ${[
+        { icon:'file-edit', title:'Easy Issue Reporting', desc:'Submit civic issues in seconds with our streamlined reporting form' },
+        { icon:'users', title:'Community Validation', desc:'Issues gain credibility through community upvotes and verification' },
+        { icon:'eye', title:'Transparent Tracking', desc:'Track your complaint status from submission to resolution in real-time' },
+        { icon:'bar-chart-3', title:'Data-Driven Insights', desc:'Analytics and visualizations help authorities prioritize action' }
+      ].map(f => `
+        <div class="bg-white rounded-2xl p-7 border border-navy-100 card-hover text-center">
+          <div class="w-14 h-14 rounded-xl bg-navy-50 flex items-center justify-center mx-auto mb-5"><i data-lucide="${f.icon}" class="w-7 h-7 text-navy-600"></i></div>
+          <h3 class="font-semibold text-navy-800 mb-2">${f.title}</h3>
+          <p class="text-sm text-navy-400 leading-relaxed">${f.desc}</p>
+        </div>
+      `).join('')}
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section class="bg-white border-y border-navy-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div class="text-center mb-14">
+        <h2 class="font-display text-3xl md:text-4xl font-bold text-navy-800 mb-3">How SAHARA Works</h2>
+        <p class="text-navy-400">Four simple steps to civic resolution</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        ${[
+          { num:'01', icon:'edit-3', title:'Report Issue', desc:'Citizens report local civic problems through the platform' },
+          { num:'02', icon:'check-circle', title:'Community Validation', desc:'Community members verify and upvote reported issues' },
+          { num:'03', icon:'shield', title:'Authority Review', desc:'Government officials review verified issues and take action' },
+          { num:'04', icon:'check-check', title:'Issue Resolution', desc:'Issues are resolved and citizens receive notifications' }
+        ].map((s,i) => `
+          <div class="text-center relative">
+            <div class="text-5xl font-display font-bold text-navy-100 mb-3">${s.num}</div>
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-navy-600 to-navy-700 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-navy-200"><i data-lucide="${s.icon}" class="w-7 h-7 text-white"></i></div>
+            <h3 class="font-semibold text-navy-800 mb-2">${s.title}</h3>
+            <p class="text-sm text-navy-400">${s.desc}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+      ${[
+        { val:'1,247', label:'Issues Reported', icon:'file-text' },
+        { val:'892', label:'Issues Resolved', icon:'check-circle' },
+        { val:'15,300', label:'Active Citizens', icon:'users' },
+        { val:'94%', label:'Satisfaction Rate', icon:'heart' }
+      ].map(s => `
+        <div class="bg-white rounded-2xl p-6 border border-navy-100 text-center card-hover">
+          <i data-lucide="${s.icon}" class="w-6 h-6 text-accent-500 mx-auto mb-2"></i>
+          <div class="text-2xl md:text-3xl font-bold text-navy-800 font-display">${s.val}</div>
+          <div class="text-sm text-navy-400 mt-1">${s.label}</div>
+        </div>
+      `).join('')}
+    </div>
+  </section>
+
+  <!-- Footer -->
+  ${renderFooter()}
+  `;
+}
+
+function renderFooter() {
+  const cfg = window.elementSdk ? window.elementSdk.config : {};
+  const tagline = cfg.platform_tagline || 'Support and Assistance for Harmonized Administrative Response and Action';
+  return `
+  <footer class="bg-navy-800 text-navy-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div class="md:col-span-2">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21"/></svg>
+            </div>
+            <span class="font-display font-bold text-lg text-white">SAHARA</span>
+          </div>
+          <p class="text-sm leading-relaxed max-w-sm" id="footer-tagline">${tagline}</p>
+        </div>
+        <div>
+          <h4 class="font-semibold text-white mb-3 text-sm">Quick Links</h4>
+          <div class="space-y-2 text-sm">
+            <a href="#" onclick="navigate('landing');return false;" class="block hover:text-white transition">Home</a>
+            <a href="#" onclick="navigate('report');return false;" class="block hover:text-white transition">Report Issue</a>
+            <a href="#" onclick="navigate('community');return false;" class="block hover:text-white transition">Community</a>
+            <a href="#" onclick="navigate('dashboard');return false;" class="block hover:text-white transition">Dashboard</a>
+          </div>
+        </div>
+        
+      
+      <div class="border-t border-navy-700 pt-6 text-center text-xs text-navy-500">
+        Built FOR citizens, BY citizens.
+      </div>
+    </div>
+  </footer>`;
+}
+
+// ========== CITIZEN DASHBOARD ==========
+function renderDashboard(container) {
+  const currentUser = JSON.parse(localStorage.getItem('sahara_currentUser') || '{}');
+  
+  if (currentUser.role === 'citizen') {
+    renderCitizenDashboard(container);
+  } else if (currentUser.role === 'authority') {
+    renderAuthorityDashboard(container);
+  } else if (currentUser.role === 'mediator') {
+    renderMediatorDashboard(container);
+  } else {
+    renderCitizenDashboard(container);
+  }
+}
+
+function renderCitizenDashboard(container) {
+  const total = ISSUES.length;
+  const inProgress = ISSUES.filter(i => i.status === 'In Progress').length;
+  const resolved = ISSUES.filter(i => i.status === 'Resolved').length;
+  const totalUpvotes = ISSUES.reduce((s,i) => s + i.upvotes, 0);
+
+  container.innerHTML = `
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 fade-in">
+    <div class="mb-8">
+      <h1 class="font-display text-3xl font-bold text-navy-800 mb-1">Citizen Dashboard</h1>
+      <p class="text-navy-400">Report issues and track community progress</p>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      ${[
+        { label:'Total Issues', val:total, icon:'file-text', color:'bg-navy-600' },
+        { label:'In Progress', val:inProgress, icon:'loader', color:'bg-accent-500' },
+        { label:'Resolved', val:resolved, icon:'check-circle', color:'bg-civic-600' },
+        { label:'Total Upvotes', val:totalUpvotes, icon:'arrow-big-up', color:'bg-navy-500' }
+      ].map(c => `
+        <div class="bg-white rounded-2xl p-5 border border-navy-100 card-hover">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl ${c.color} flex items-center justify-center"><i data-lucide="${c.icon}" class="w-5 h-5 text-white"></i></div>
+          </div>
+          <div class="text-2xl font-bold text-navy-800">${c.val}</div>
+          <div class="text-sm text-navy-400">${c.label}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="mb-6 flex items-center justify-between">
+      <h2 class="font-display text-xl font-bold text-navy-800">Recent Community Issues</h2>
+      <button onclick="navigate('report')" class="text-sm text-accent-600 hover:text-accent-700 font-medium flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i><span>Report New</span></button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      ${ISSUES.slice(0, 6).map(i => issueCard(i)).join('')}
+    </div>
+  </div>
+  ${renderFooter()}`;
+}
+
+function renderAuthorityDashboard(container) {
+  const total = ISSUES.length;
+  const pending = ISSUES.filter(i => i.status === 'Submitted').length;
+  const inProg = ISSUES.filter(i => i.status === 'In Progress').length;
+  const resolved = ISSUES.filter(i => i.status === 'Resolved').length;
+
+  const catCounts = {};
+  CATEGORIES.forEach(c => catCounts[c] = 0);
+  ISSUES.forEach(i => { if (catCounts[i.category] !== undefined) catCounts[i.category]++; });
+
+  const locCounts = {};
+  ISSUES.forEach(i => { locCounts[i.location] = (locCounts[i.location] || 0) + 1; });
+
+  container.innerHTML = `
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 fade-in">
+    <div class="mb-8">
+      <h1 class="font-display text-3xl font-bold text-navy-800 mb-1">Authority Dashboard</h1>
+      <p class="text-navy-400">Manage, verify, and resolve civic issues</p>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      ${[
+        { label:'Total Issues', val:total, icon:'file-text', bg:'bg-navy-600' },
+        { label:'Pending Review', val:pending, icon:'clock', bg:'bg-amber-500' },
+        { label:'In Progress', val:inProg, icon:'loader', bg:'bg-accent-500' },
+        { label:'Resolved', val:resolved, icon:'check-circle', bg:'bg-civic-600' }
+      ].map(c => `
+        <div class="bg-white rounded-2xl p-5 border border-navy-100 card-hover">
+          <div class="w-10 h-10 rounded-xl ${c.bg} flex items-center justify-center mb-3"><i data-lucide="${c.icon}" class="w-5 h-5 text-white"></i></div>
+          <div class="text-2xl font-bold text-navy-800">${c.val}</div>
+          <div class="text-sm text-navy-400">${c.label}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+      <div class="bg-white rounded-2xl border border-navy-100 p-6">
+        <h3 class="font-semibold text-navy-700 mb-4">Issues by Category</h3>
+        <div style="height:260px;"><canvas id="pieChart"></canvas></div>
+      </div>
+      <div class="bg-white rounded-2xl border border-navy-100 p-6">
+        <h3 class="font-semibold text-navy-700 mb-4">Issues by Location</h3>
+        <div style="height:260px;"><canvas id="barChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-navy-100 overflow-hidden">
+      <div class="p-5 border-b border-navy-100">
+        <h3 class="font-semibold text-navy-700">All Issues for Review</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-navy-50 text-left">
+            <tr>
+              <th class="px-5 py-3 font-semibold text-navy-600">ID</th>
+              <th class="px-5 py-3 font-semibold text-navy-600">Category</th>
+              <th class="px-5 py-3 font-semibold text-navy-600">Location</th>
+              <th class="px-5 py-3 font-semibold text-navy-600 text-center">Upvotes</th>
+              <th class="px-5 py-3 font-semibold text-navy-600">Status</th>
+              <th class="px-5 py-3 font-semibold text-navy-600 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminTable">
+            ${ISSUES.map(i => adminRow(i)).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  ${renderFooter()}`;
+
+  // Charts
+  setTimeout(() => {
+    const pieCtx = document.getElementById('pieChart');
+    const barCtx = document.getElementById('barChart');
+    if (pieCtx) {
+      if (pieChart) pieChart.destroy();
+      pieChart = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(catCounts),
+          datasets: [{ data: Object.values(catCounts), backgroundColor: ['#1a3a6b','#f97316','#22c55e','#3d5f9a','#fb923c','#86efac'], borderWidth: 0 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ boxWidth:12, padding:12, font:{ size:11, family:'DM Sans' } } } } }
+      });
+    }
+    if (barCtx) {
+      if (barChart) barChart.destroy();
+      const locs = Object.keys(locCounts).map(l => l.length > 20 ? l.substring(0,20) + '…' : l);
+      barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: locs,
+          datasets: [{ label:'Issues', data: Object.values(locCounts), backgroundColor:'#1a3a6b', borderRadius:6, barThickness:28 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1, font:{ family:'DM Sans' } } }, x:{ ticks:{ font:{ size:10, family:'DM Sans' }, maxRotation:45 } } }, plugins:{ legend:{ display:false } } }
+      });
+    }
+  }, 100);
+}
+
+function renderMediatorDashboard(container) {
+  const total = ISSUES.length;
+  const pending = ISSUES.filter(i => !['Resolved','Closed'].includes(i.status)).length;
+  const avgUpvotes = Math.round(ISSUES.reduce((s,i) => s + i.upvotes, 0) / total);
+  const communityEngagement = ISSUES.filter(i => i.upvotes > 0).length;
+
+  container.innerHTML = `
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 fade-in">
+    <div class="mb-8">
+      <h1 class="font-display text-3xl font-bold text-navy-800 mb-1">Mediator Dashboard</h1>
+      <p class="text-navy-400">Monitor community engagement and facilitate communication</p>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      ${[
+        { label:'Total Issues', val:total, icon:'file-text', bg:'bg-navy-600' },
+        { label:'Unresolved', val:pending, icon:'alert-circle', bg:'bg-amber-500' },
+        { label:'Community Support', val:communityEngagement, icon:'users', bg:'bg-civic-600' },
+        { label:'Avg. Upvotes', val:avgUpvotes, icon:'trending-up', bg:'bg-navy-500' }
+      ].map(c => `
+        <div class="bg-white rounded-2xl p-5 border border-navy-100 card-hover">
+          <div class="w-10 h-10 rounded-xl ${c.bg} flex items-center justify-center mb-3"><i data-lucide="${c.icon}" class="w-5 h-5 text-white"></i></div>
+          <div class="text-2xl font-bold text-navy-800">${c.val}</div>
+          <div class="text-sm text-navy-400">${c.label}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="mb-6">
+      <h2 class="font-display text-xl font-bold text-navy-800 mb-4">High Priority Issues</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        ${ISSUES.filter(i => i.upvotes > 20 && i.status !== 'Closed').slice(0, 6).map(i => issueCard(i)).join('')}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-navy-100 overflow-hidden">
+      <div class="p-5 border-b border-navy-100">
+        <h3 class="font-semibold text-navy-700">Community Issues Status Overview</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-navy-50 text-left">
+            <tr>
+              <th class="px-5 py-3 font-semibold text-navy-600">Issue</th>
+              <th class="px-5 py-3 font-semibold text-navy-600">Community Support</th>
+              <th class="px-5 py-3 font-semibold text-navy-600">Status</th>
+              <th class="px-5 py-3 font-semibold text-navy-600 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ISSUES.map(i => `
+              <tr class="border-b border-navy-50 hover:bg-navy-50/50 transition">
+                <td class="px-5 py-3.5"><span class="font-medium text-navy-700">${i.title.substring(0, 40)}...</span></td>
+                <td class="px-5 py-3.5"><span class="text-accent-600 font-semibold">${i.upvotes} upvotes</span></td>
+                <td class="px-5 py-3.5"><span class="text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusClass(i.status)}">${i.status}</span></td>
+                <td class="px-5 py-3.5 text-right"><button onclick="navigate('details',ISSUES.find(x=>x.id==='${i.id}'))" class="text-sm text-navy-600 hover:text-navy-800 font-medium">View</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  ${renderFooter()}`;
+}
+
+// ========== REPORT ISSUE PAGE ==========
+function renderReport(container) {
+  container.innerHTML = `
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 py-10 fade-in">
+    <div class="mb-8">
+      <h1 class="font-display text-3xl font-bold text-navy-800 mb-1">Report an Issue</h1>
+      <p class="text-navy-400">Help improve your community by reporting civic problems</p>
+    </div>
+    <div id="reportForm" class="bg-white rounded-2xl border border-navy-100 p-6 md:p-8 shadow-sm">
+      <div class="space-y-5">
+        <div>
+          <label for="issueCategory" class="block text-sm font-semibold text-navy-700 mb-1.5">Category</label>
+          <select id="issueCategory" class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 outline-none transition text-sm">
+            <option value="">Select a category</option>
+            ${CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label for="issueTitle" class="block text-sm font-semibold text-navy-700 mb-1.5">Issue Title</label>
+          <input type="text" id="issueTitle" placeholder="Brief title of the issue" class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 outline-none transition text-sm">
+        </div>
+        <div>
+          <label for="issueDesc" class="block text-sm font-semibold text-navy-700 mb-1.5">Description</label>
+          <textarea id="issueDesc" rows="4" placeholder="Describe the issue in detail..." class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 outline-none transition text-sm resize-none"></textarea>
+        </div>
+        <div>
+          <label for="issueLocation" class="block text-sm font-semibold text-navy-700 mb-1.5">Location</label>
+          <div class="relative">
+            <input type="text" id="issueLocation" placeholder="Enter the location" class="w-full px-4 py-3 pl-10 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 outline-none transition text-sm">
+            <i data-lucide="map-pin" class="w-4 h-4 text-navy-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-navy-700 mb-1.5">Upload Image (Optional)</label>
+          <div class="border-2 border-dashed border-navy-200 rounded-xl p-6 text-center hover:border-navy-300 transition cursor-pointer" onclick="document.getElementById('fileInput').click()">
+            <i data-lucide="upload-cloud" class="w-8 h-8 text-navy-300 mx-auto mb-2"></i>
+            <p class="text-sm text-navy-400">Click to upload or drag and drop</p>
+            <p class="text-xs text-navy-300 mt-1">PNG, JPG up to 5MB</p>
+            <input type="file" id="fileInput" accept="image/*" class="hidden">
+          </div>
+        </div>
+        <button onclick="submitIssue(event)" class="w-full py-3.5 bg-navy-600 hover:bg-navy-700 text-white font-semibold rounded-xl shadow-lg shadow-navy-200 transition flex items-center justify-center gap-2">
+          <i data-lucide="send" class="w-5 h-5"></i>Submit Issue
+        </button>
+      </div>
+      <div id="submitSuccess" class="hidden mt-5 bg-civic-50 border border-civic-200 rounded-xl p-5 text-center">
+        <div class="w-12 h-12 bg-civic-500 rounded-full flex items-center justify-center mx-auto mb-3"><i data-lucide="check" class="w-6 h-6 text-white"></i></div>
+        <h3 class="font-semibold text-civic-700 mb-1">Issue Reported Successfully!</h3>
+        <p class="text-sm text-civic-600">Your issue has been submitted and will be reviewed by authorities. You can track its status on your dashboard.</p>
+        <button onclick="navigate('dashboard')" class="mt-4 px-6 py-2 bg-civic-600 hover:bg-civic-700 text-white rounded-full text-sm font-medium transition">Go to Dashboard</button>
+      </div>
+    </div>
+  </div>
+  ${renderFooter()}`;
+}
+
+function submitIssue(e) {
+  e.preventDefault();
+  const cat = document.getElementById('issueCategory').value;
+  const title = document.getElementById('issueTitle').value;
+  const desc = document.getElementById('issueDesc').value;
+  const loc = document.getElementById('issueLocation').value;
+  if (!cat || !title || !desc || !loc) {
+    showToast('Please fill in all required fields', 'error');
+    return;
+  }
+  const newIssue = { 
+    id:'ISS-' + String(ISSUES.length + 1).padStart(3,'0'), 
+    title, 
+    description:desc, 
+    category:cat, 
+    location:loc, 
+    upvotes:0, 
+    status:'Submitted', 
+    createdAt:new Date().toISOString().split('T')[0], 
+    resolutionNotes:'' 
+  };
+  // Add to Data SDK
+  const createResult = window.dataSdk.create(newIssue);
+  if (createResult.isError) {
+    showToast('Failed to submit issue', 'error');
+    console.error('Failed to create issue:', createResult.error);
+    return;
+  }
+  document.getElementById('submitSuccess').classList.remove('hidden');
+  lucide.createIcons();
+}
+
+function showToast(msg, type='info') {
+  const existing = document.getElementById('toast');
+  if (existing) existing.remove();
+  const colors = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-civic-600' : 'bg-navy-600';
+  const toast = document.createElement('div');
+  toast.id = 'toast';
+  toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-50 ${colors} text-white px-6 py-3 rounded-full shadow-xl text-sm font-medium fade-in`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ========== COMMUNITY ISSUES ==========
+function renderCommunity(container) {
+  container.innerHTML = `
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 fade-in">
+    <div class="mb-8">
+      <h1 class="font-display text-3xl font-bold text-navy-800 mb-1">Community Issues</h1>
+      <p class="text-navy-400">Browse, upvote, and track civic issues in your area</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-navy-100 p-4 mb-8 flex flex-wrap gap-3 items-center">
+      <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+        <i data-lucide="filter" class="w-4 h-4 text-navy-400"></i>
+        <select id="filterCat" onchange="filterCommunity()" class="flex-1 px-3 py-2 rounded-lg border border-navy-200 text-sm text-navy-700 bg-navy-50/50 outline-none">
+          <option value="">All Categories</option>
+          ${CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+        <i data-lucide="map-pin" class="w-4 h-4 text-navy-400"></i>
+        <input type="text" id="filterLoc" onkeyup="filterCommunity()" placeholder="Filter by location" class="flex-1 px-3 py-2 rounded-lg border border-navy-200 text-sm text-navy-700 bg-navy-50/50 outline-none">
+      </div>
+      <select id="sortBy" onchange="filterCommunity()" class="px-3 py-2 rounded-lg border border-navy-200 text-sm text-navy-700 bg-navy-50/50 outline-none">
+        <option value="recent">Most Recent</option>
+        <option value="upvoted">Most Upvoted</option>
+        <option value="unresolved">Unresolved</option>
+      </select>
+    </div>
+    <div id="communityGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+  </div>
+  ${renderFooter()}`;
+  filterCommunity();
+}
+
+function filterCommunity() {
+  const cat = document.getElementById('filterCat').value;
+  const loc = document.getElementById('filterLoc').value.toLowerCase();
+  const sort = document.getElementById('sortBy').value;
+  let filtered = [...ISSUES];
+  if (cat) filtered = filtered.filter(i => i.category === cat);
+  if (loc) filtered = filtered.filter(i => i.location.toLowerCase().includes(loc));
+  if (sort === 'upvoted') filtered.sort((a,b) => b.upvotes - a.upvotes);
+  else if (sort === 'recent') filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  else if (sort === 'unresolved') filtered = filtered.filter(i => !['Resolved','Closed'].includes(i.status));
+
+  const grid = document.getElementById('communityGrid');
+  grid.innerHTML = filtered.length ? filtered.map(i => issueCard(i)).join('') : '<div class="col-span-full text-center py-16 text-navy-400"><i data-lucide="search-x" class="w-10 h-10 mx-auto mb-3 opacity-40"></i><p>No issues match your filters</p></div>';
+  lucide.createIcons();
+}
+
+// ========== ISSUE DETAILS ==========
+function renderDetails(container) {
+  const issue = selectedIssue;
+  if (!issue) { navigate('community'); return; }
+  const si = STATUSES.indexOf(issue.status);
+
+  container.innerHTML = `
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10 fade-in">
+    <button onclick="navigate('community')" class="flex items-center gap-1.5 text-sm text-navy-500 hover:text-navy-700 mb-6 font-medium transition"><i data-lucide="arrow-left" class="w-4 h-4"></i>Back to Community Issues</button>
+    <div class="bg-white rounded-2xl border border-navy-100 overflow-hidden shadow-sm">
+      <div class="p-6 md:p-8">
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <span class="text-xs font-semibold px-3 py-1 rounded-full ${getStatusClass(issue.status)}">${issue.status}</span>
+          <span class="text-xs text-navy-400">${issue.id} · ${issue.createdAt}</span>
+        </div>
+        <h1 class="font-display text-2xl md:text-3xl font-bold text-navy-800 mb-4">${issue.title}</h1>
+        <div class="flex flex-wrap gap-3 mb-6">
+          <span class="text-sm bg-navy-50 text-navy-600 px-3 py-1.5 rounded-full flex items-center gap-1.5"><i data-lucide="tag" class="w-3.5 h-3.5"></i>${issue.category}</span>
+          <span class="text-sm bg-navy-50 text-navy-600 px-3 py-1.5 rounded-full flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>${issue.location}</span>
+        </div>
+        <p class="text-navy-600 leading-relaxed mb-6">${issue.description}</p>
+        <div class="flex items-center gap-4 pb-6 border-b border-navy-100">
+          <button onclick="upvoteIssue('${issue.id}');document.getElementById('detailUpvote').textContent=ISSUES.find(i=>i.id==='${issue.id}').upvotes" class="flex items-center gap-2 px-5 py-2.5 bg-accent-50 text-accent-600 rounded-full font-semibold hover:bg-accent-100 transition">
+            <i data-lucide="arrow-big-up" class="w-5 h-5"></i><span id="detailUpvote">${issue.upvotes}</span> Upvotes
+          </button>
+          ${issue.status === 'Resolved' ? `<button onclick="navigate('feedback')" class="flex items-center gap-2 px-5 py-2.5 bg-civic-50 text-civic-600 rounded-full font-semibold hover:bg-civic-100 transition"><i data-lucide="message-square" class="w-5 h-5"></i>Give Feedback</button>` : ''}
+        </div>
+
+        <!-- Status Tracker -->
+        <div class="pt-6 mb-6">
+          <h3 class="font-semibold text-navy-700 mb-5">Status Tracker</h3>
+          <div class="flex items-center gap-0">
+            ${STATUSES.map((s,idx) => `
+              <div class="tracker-step flex flex-col items-center ${idx < si ? 'completed' : idx === si ? 'active' : ''}" style="flex:0 0 auto;">
+                <div class="tracker-dot"><i data-lucide="${idx <= si ? 'check' : 'circle'}" class="w-4 h-4 ${idx <= si ? 'text-white' : 'text-navy-300'}"></i></div>
+                <span class="text-xs mt-2 text-center font-medium ${idx <= si ? 'text-navy-700' : 'text-navy-300'}" style="max-width:70px;">${s}</span>
+              </div>
+              ${idx < STATUSES.length - 1 ? `<div class="tracker-line ${idx < si ? 'completed' : idx === si ? 'active' : ''}"></div>` : ''}
+            `).join('')}
+          </div>
+        </div>
+
+        ${issue.resolutionNotes ? `
+        <div class="bg-civic-50 border border-civic-200 rounded-xl p-5">
+          <h3 class="font-semibold text-civic-700 mb-2 flex items-center gap-2"><i data-lucide="clipboard-check" class="w-5 h-5"></i>Resolution Notes</h3>
+          <p class="text-sm text-civic-600">${issue.resolutionNotes}</p>
+        </div>
+        ` : ''}
+      </div>
+    </div>
+  </div>
+  ${renderFooter()}`;
+}
+
+// ========== ADMIN DASHBOARD ==========
+function renderAdmin(container) {
+  const currentUser = JSON.parse(localStorage.getItem('sahara_currentUser') || '{}');
+  if (currentUser.role !== 'authority') {
+    showToast('Access denied. Only authorities can access this page.', 'error');
+    navigate('dashboard');
+    return;
+  }
+  renderAuthorityDashboard(container);
+}
+
+function adminRow(issue) {
+  return `
+  <tr class="border-b border-navy-50 hover:bg-navy-50/50 transition" id="row-${issue.id}">
+    <td class="px-5 py-3.5 font-mono text-xs text-navy-500">${issue.id}</td>
+    <td class="px-5 py-3.5">${issue.category}</td>
+    <td class="px-5 py-3.5 text-navy-500">${issue.location}</td>
+    <td class="px-5 py-3.5 text-center font-semibold">${issue.upvotes}</td>
+    <td class="px-5 py-3.5"><span class="text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusClass(issue.status)}">${issue.status}</span></td>
+    <td class="px-5 py-3.5 text-right">
+      <div class="flex items-center justify-end gap-1">
+        ${issue.status === 'Submitted' ? `<button onclick="adminAction('${issue.id}','Verified')" class="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium transition">Verify</button>` : ''}
+        ${issue.status === 'Verified' ? `<button onclick="adminAction('${issue.id}','In Progress')" class="px-3 py-1.5 text-xs bg-accent-50 text-accent-600 rounded-lg hover:bg-accent-100 font-medium transition">Start</button>` : ''}
+        ${issue.status === 'In Progress' ? `<button onclick="adminAction('${issue.id}','Resolved')" class="px-3 py-1.5 text-xs bg-civic-50 text-civic-600 rounded-lg hover:bg-civic-100 font-medium transition">Resolve</button>` : ''}
+        ${issue.status === 'Resolved' ? `<button onclick="adminAction('${issue.id}','Closed')" class="px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 font-medium transition">Close</button>` : ''}
+        <button onclick="navigate('details',ISSUES.find(i=>i.id==='${issue.id}'))" class="px-3 py-1.5 text-xs bg-navy-50 text-navy-600 rounded-lg hover:bg-navy-100 font-medium transition">View</button>
+      </div>
+    </td>
+  </tr>`;
+}
+
+function adminAction(id, newStatus) {
+  const issue = ISSUES.find(i => i.id === id);
+  if (issue) {
+    issue.status = newStatus;
+    if (newStatus === 'Resolved') issue.resolutionNotes = 'Issue has been addressed by the concerned authority.';
+    // Update in Data SDK
+    const updateResult = window.dataSdk.update(issue);
+    if (updateResult.isError) {
+      console.error('Failed to update issue:', updateResult.error);
+      return;
+    }
+    showToast(`Issue ${id} updated to "${newStatus}"`, 'success');
+    // Re-render the row
+    const row = document.getElementById('row-' + id);
+    if (row) { row.outerHTML = adminRow(issue); lucide.createIcons(); }
+  }
+}
+
+// ========== FEEDBACK PAGE ==========
+function renderFeedback(container) {
+  feedbackRating = 0;
+  container.innerHTML = `
+  <div class="max-w-lg mx-auto px-4 sm:px-6 py-10 fade-in">
+    <div class="mb-8">
+      <h1 class="font-display text-3xl font-bold text-navy-800 mb-1">Share Your Feedback</h1>
+      <p class="text-navy-400">Help us improve by rating the resolution of your issue</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-navy-100 p-6 md:p-8 shadow-sm">
+      <div class="text-center mb-6">
+        <p class="text-sm text-navy-500 mb-4">How satisfied are you with the resolution?</p>
+        <div class="flex items-center justify-center gap-2 star-rating" id="starContainer">
+          ${[1,2,3,4,5].map(n => `<button onclick="setRating(${n})" class="p-1"><i data-lucide="star" class="w-10 h-10 text-navy-200 transition" id="star${n}"></i></button>`).join('')}
+        </div>
+        <p id="ratingText" class="text-sm text-navy-400 mt-2 h-5"></p>
+      </div>
+      <div class="mb-5">
+        <label for="feedbackComment" class="block text-sm font-semibold text-navy-700 mb-1.5">Your Comments</label>
+        <textarea id="feedbackComment" rows="4" placeholder="Share your experience..." class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 outline-none transition text-sm resize-none"></textarea>
+      </div>
+      <button onclick="submitFeedback(event)" class="w-full py-3.5 bg-navy-600 hover:bg-navy-700 text-white font-semibold rounded-xl shadow-lg shadow-navy-200 transition flex items-center justify-center gap-2">
+        <i data-lucide="send" class="w-5 h-5"></i>Submit Feedback
+      </button>
+      <div id="feedbackSuccess" class="hidden mt-5 bg-civic-50 border border-civic-200 rounded-xl p-5 text-center">
+        <div class="w-12 h-12 bg-civic-500 rounded-full flex items-center justify-center mx-auto mb-3"><i data-lucide="heart" class="w-6 h-6 text-white"></i></div>
+        <h3 class="font-semibold text-civic-700 mb-1">Thank You!</h3>
+        <p class="text-sm text-civic-600">Your feedback helps us serve you better.</p>
+      </div>
+    </div>
+  </div>
+  ${renderFooter()}`;
+}
+
+function setRating(n) {
+  feedbackRating = n;
+  const labels = ['','Poor','Fair','Good','Very Good','Excellent'];
+  document.getElementById('ratingText').textContent = labels[n];
+  for (let i = 1; i <= 5; i++) {
+    const star = document.getElementById('star' + i);
+    if (i <= n) { star.style.fill = '#f97316'; star.style.color = '#f97316'; }
+    else { star.style.fill = 'none'; star.style.color = '#d1d5db'; }
+  }
+}
+
+function submitFeedback(e) {
+  e.preventDefault();
+  if (feedbackRating === 0) { showToast('Please select a rating', 'error'); return; }
+  document.getElementById('feedbackSuccess').classList.remove('hidden');
+  lucide.createIcons();
+  showToast('Feedback submitted!', 'success');
+}
+
+// ========== LOGIN / REGISTER ==========
+function renderLogin(container) {
+  container.innerHTML = `
+  <div class="min-h-full flex items-center justify-center px-4 py-16">
+    <div class="w-full max-w-md fade-in">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 rounded-2xl bg-navy-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-navy-200">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21"/><circle cx="12" cy="10" r="1"/><circle cx="8" cy="13" r="1"/><circle cx="16" cy="13" r="1"/></svg>
+        </div>
+        <h1 class="font-display text-2xl font-bold text-navy-800">Welcome to SAHARA</h1>
+        <p class="text-sm text-navy-400 mt-1">Sign in to report and track civic issues</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-navy-100 p-6 md:p-8 shadow-sm">
+        <div class="flex bg-navy-50 rounded-xl p-1 mb-6">
+          <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-white text-navy-700 shadow-sm transition">Login</button>
+          <button id="tabRegister" onclick="switchAuthTab('register')" class="flex-1 py-2.5 text-sm font-semibold rounded-lg text-navy-400 transition">Register</button>
+        </div>
+        <div id="loginForm">
+          <div class="space-y-4">
+            <div>
+              <label for="loginEmail" class="block text-sm font-semibold text-navy-700 mb-1.5">Email</label>
+              <input type="email" id="loginEmail" placeholder="your@email.com" class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 outline-none transition text-sm">
+            </div>
+            <div>
+              <label for="loginPass" class="block text-sm font-semibold text-navy-700 mb-1.5">Password</label>
+              <input type="password" id="loginPass" placeholder="Enter your password" class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 outline-none transition text-sm">
+              <p class="text-xs text-navy-300 mt-1 italic">Demo: Any email/password works</p>
+            </div>
+            <button onclick="handleLogin(event)" class="w-full py-3.5 bg-navy-600 hover:bg-navy-700 text-white font-semibold rounded-xl shadow-lg shadow-navy-200 transition">Sign In</button>
+          </div>
+        </div>
+        <div id="registerForm" class="hidden">
+          <div class="space-y-4">
+            <div>
+              <label for="regName" class="block text-sm font-semibold text-navy-700 mb-1.5">Full Name</label>
+              <input type="text" id="regName" placeholder="Your full name" class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 outline-none transition text-sm">
+            </div>
+            <div>
+              <label for="regEmail" class="block text-sm font-semibold text-navy-700 mb-1.5">Email</label>
+              <input type="email" id="regEmail" placeholder="your@email.com" class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 outline-none transition text-sm">
+            </div>
+            <div>
+              <label for="regPhone" class="block text-sm font-semibold text-navy-700 mb-1.5">Phone</label>
+              <input type="tel" id="regPhone" placeholder="Your phone number" class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 outline-none transition text-sm">
+            </div>
+            <div>
+              <label for="regRole" class="block text-sm font-semibold text-navy-700 mb-1.5">I am a</label>
+              <select id="regRole" class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 outline-none transition text-sm">
+                <option value="">Select your role</option>
+                <option value="citizen">Citizen - Report community issues</option>
+                <option value="authority">Authority - Manage and resolve issues</option>
+                <option value="mediator">Mediator - Bridge communication</option>
+              </select>
+            </div>
+            <div>
+              <label for="regPassword" class="block text-sm font-semibold text-navy-700 mb-1.5">Password</label>
+              <input type="password" id="regPassword" placeholder="Create a password" class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 outline-none transition text-sm">
+              <p class="text-xs text-navy-300 mt-1">At least 6 characters</p>
+            </div>
+            <div>
+              <label for="regConfirmPassword" class="block text-sm font-semibold text-navy-700 mb-1.5">Confirm Password</label>
+              <input type="password" id="regConfirmPassword" placeholder="Confirm your password" class="w-full px-4 py-3 rounded-xl border border-navy-200 bg-navy-50/50 text-navy-800 focus:ring-2 focus:ring-navy-300 outline-none transition text-sm">
+            </div>
+            <button onclick="handleRegister(event)" class="w-full py-3.5 bg-navy-600 hover:bg-navy-700 text-white font-semibold rounded-xl shadow-lg shadow-navy-200 transition">Create Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function switchAuthTab(tab) {
+  const loginBtn = document.getElementById('tabLogin');
+  const regBtn = document.getElementById('tabRegister');
+  const loginForm = document.getElementById('loginForm');
+  const regForm = document.getElementById('registerForm');
+  if (tab === 'login') {
+    loginBtn.className = 'flex-1 py-2.5 text-sm font-semibold rounded-lg bg-white text-navy-700 shadow-sm transition';
+    regBtn.className = 'flex-1 py-2.5 text-sm font-semibold rounded-lg text-navy-400 transition';
+    loginForm.classList.remove('hidden'); regForm.classList.add('hidden');
+  } else {
+    regBtn.className = 'flex-1 py-2.5 text-sm font-semibold rounded-lg bg-white text-navy-700 shadow-sm transition';
+    loginBtn.className = 'flex-1 py-2.5 text-sm font-semibold rounded-lg text-navy-400 transition';
+    regForm.classList.remove('hidden'); loginForm.classList.add('hidden');
+  }
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPass').value;
+  if (!email || !password) {
+    showToast('Please fill in all fields', 'error');
+    return;
+  }
+  // Check if user exists and password matches
+  const users = JSON.parse(localStorage.getItem('sahara_users') || '[]');
+  const user = users.find(u => u.email === email);
+  if (!user) {
+    showToast('Email not registered. Please create an account first.', 'error');
+    return;
+  }
+  if (user.password !== password) {
+    showToast('Invalid password. Please try again.', 'error');
+    return;
+  }
+  localStorage.setItem('sahara_currentUser', JSON.stringify(user));
+  showToast('Welcome back! Redirecting to dashboard...', 'success');
+  setTimeout(() => navigate('dashboard'), 1000);
+}
+
+function handleRegister(e) {
+  e.preventDefault();
+  const name = document.getElementById('regName').value;
+  const email = document.getElementById('regEmail').value;
+  const phone = document.getElementById('regPhone').value;
+  const role = document.getElementById('regRole').value;
+  const password = document.getElementById('regPassword').value;
+  const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+  if (!name || !email || !phone || !role || !password || !confirmPassword) {
+    showToast('Please fill in all fields', 'error');
+    return;
+  }
+
+  if (password.length < 6) {
+    showToast('Password must be at least 6 characters', 'error');
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showToast('Passwords do not match', 'error');
+    return;
+  }
+
+  const users = JSON.parse(localStorage.getItem('sahara_users') || '[]');
+  if (users.find(u => u.email === email)) {
+    showToast('Email already registered. Please login instead.', 'error');
+    return;
+  }
+
+  const newUser = { id: 'USR-' + Date.now(), name, email, phone, role, password };
+  users.push(newUser);
+  localStorage.setItem('sahara_users', JSON.stringify(users));
+  localStorage.setItem('sahara_currentUser', JSON.stringify(newUser));
+
+  showToast('Account created successfully! Redirecting...', 'success');
+  setTimeout(() => navigate('dashboard'), 1000);
+}
+
+// ========== ELEMENT SDK INIT ==========
+const defaultConfig = {
+  hero_title: 'SAHARA – Your Voice for a Better Community',
+  hero_subtitle: 'Report and track civic issues in your locality.',
+  platform_tagline: 'Support and Assistance for Harmonized Administrative Response and Action',
+  background_color: '#f0f3f9',
+  surface_color: '#ffffff',
+  text_color: '#0f2140',
+  primary_action_color: '#1a3a6b',
+  secondary_action_color: '#f97316',
+  font_family: 'DM Sans',
+  font_size: 16
+};
+
+function applyConfig(config) {
+  // Apply colors
+  const bg = config.background_color || defaultConfig.background_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const text = config.text_color || defaultConfig.text_color;
+  const primary = config.primary_action_color || defaultConfig.primary_action_color;
+  const secondary = config.secondary_action_color || defaultConfig.secondary_action_color;
+  const font = config.font_family || defaultConfig.font_family;
+  const fontSize = config.font_size || defaultConfig.font_size;
+
+  document.body.style.backgroundColor = bg;
+  document.body.style.color = text;
+  document.body.style.fontFamily = `${font}, DM Sans, sans-serif`;
+  document.body.style.fontSize = fontSize + 'px';
+
+  // Update text content
+  const heroTitle = document.getElementById('landing-hero-title');
+  if (heroTitle) heroTitle.textContent = config.hero_title || defaultConfig.hero_title;
+  const heroSub = document.getElementById('landing-hero-sub');
+  if (heroSub) heroSub.textContent = config.hero_subtitle || defaultConfig.hero_subtitle;
+  const tagline = document.getElementById('landing-tagline');
+  if (tagline) tagline.textContent = config.platform_tagline || defaultConfig.platform_tagline;
+  const footerTagline = document.getElementById('footer-tagline');
+  if (footerTagline) footerTagline.textContent = config.platform_tagline || defaultConfig.platform_tagline;
+
+  // Apply surface color to cards
+  document.querySelectorAll('.bg-white').forEach(el => el.style.backgroundColor = surface);
+
+  // Apply primary action color to primary buttons
+  document.querySelectorAll('[class*="bg-navy-600"]').forEach(el => {
+    if (el.tagName === 'BUTTON' || el.tagName === 'A') el.style.backgroundColor = primary;
+  });
+
+  // Apply secondary color to accent elements
+  document.querySelectorAll('[class*="text-accent-"]').forEach(el => el.style.color = secondary);
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => {
+      applyConfig(config);
+    },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+        { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
+      ],
+      borderables: [],
+      fontEditable: {
+        get: () => config.font_family || defaultConfig.font_family,
+        set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+      },
+      fontSizeable: {
+        get: () => config.font_size || defaultConfig.font_size,
+        set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+      }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['hero_title', config.hero_title || defaultConfig.hero_title],
+      ['hero_subtitle', config.hero_subtitle || defaultConfig.hero_subtitle],
+      ['platform_tagline', config.platform_tagline || defaultConfig.platform_tagline]
+    ])
+  });
+}
+
+// Initial render
+initializeData().then(() => {
+  navigate('landing');
+  setTimeout(() => renderAuthLinks(), 100); // 👈 ADD THIS
+});;
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dec3c0db2e1d126',t:'MTc3MzkyMDc2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
