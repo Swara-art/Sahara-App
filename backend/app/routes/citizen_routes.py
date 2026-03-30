@@ -1,83 +1,70 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 from app.schemas.complaint_schema import ComplaintCreate
 from app.db.database import complaints_collection, upvotes_collection
+from app.utils.dependencies import get_current_user
 from datetime import datetime, timezone
 from bson import ObjectId
+from fastapi import UploadFile, File, Depends
+import cloudinary.uploader
+from datetime import datetime, timezone
 
 router = APIRouter()
 
 
-# 🔥 1. CREATE COMPLAINT
+# 🔥 1. CREATE COMPLAINT (JWT protected)
 @router.post("/complaint")
-async def create_complaint(complaint: ComplaintCreate):
-    
-    complaint_dict = complaint.model_dump()
+async def create_complaint(
+    title: str,
+    description: str,
+    pincode: str,
+    location: str = None,
+    image: UploadFile = File(None),
+    current_user: dict = Depends(get_current_user)
+):
 
     now = datetime.now(timezone.utc)
 
-    complaint_dict["status"] = "pending"
-    complaint_dict["created_at"] = now
-    complaint_dict["upvotes"] = 0
+    image_url = None
 
-    # logs (timeline system)
-    complaint_dict["logs"] = [
-        {
-            "status": "pending",
-            "time": now
-        }
-    ]
+    if image:
+        upload_result = cloudinary.uploader.upload(image.file)
+        image_url = upload_result["secure_url"]
 
-    # temporary user (will replace later with auth)
-    complaint_dict["user_id"] = "demo_user"
+    complaint_dict = {
+        "title": title,
+        "description": description,
+        "pincode": pincode,
+        "location": location,
+        "image_url": image_url,
+        "status": "pending",
+        "created_at": now,
+        "upvotes": 0,
+        "user_id": current_user["user_id"],
+        "logs": [
+            {
+                "status": "pending",
+                "time": now
+            }
+        ]
+    }
 
     result = await complaints_collection.insert_one(complaint_dict)
 
     return {
         "message": "Complaint created successfully",
-        "complaint_id": str(result.inserted_id)
+        "complaint_id": str(result.inserted_id),
+        "image_url": image_url
     }
 
 
-# 🔥 2. GET COMPLAINTS (with filter + sort)
-@router.get("/complaints")
-async def get_all_complaints(
-    pincode: str = Query(None),
-    status: str = Query(None),
-    sort_by: str = Query(None)
+# 🔥 3. TOGGLE UPVOTE (JWT protected)
+@router.post("/complaint/{complaint_id}/upvote")
+async def toggle_upvote(
+    complaint_id: str,
+    current_user: dict = Depends(get_current_user)
 ):
 
-    filter_query = {}
-
-    if pincode:
-        filter_query["pincode"] = pincode
-
-    if status:
-        filter_query["status"] = status
-
-    # sorting logic
-    if sort_by == "latest":
-        cursor = complaints_collection.find(filter_query).sort("created_at", -1)
-
-    elif sort_by == "upvotes":
-        cursor = complaints_collection.find(filter_query).sort("upvotes", -1)
-
-    else:
-        cursor = complaints_collection.find(filter_query)
-
-    complaints = []
-
-    async for complaint in cursor:
-        complaint["_id"] = str(complaint["_id"])
-        complaints.append(complaint)
-
-    return complaints
-
-
-# 🔥 3. TOGGLE UPVOTE
-@router.post("/complaint/{complaint_id}/upvote")
-async def toggle_upvote(complaint_id: str):
-
-    user_id = "demo_user"  # temporary
+    user_id = current_user["user_id"]
 
     existing = await upvotes_collection.find_one({
         "user_id": user_id,

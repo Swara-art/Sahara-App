@@ -1,15 +1,17 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from app.db.database import complaints_collection
 from bson import ObjectId
 from datetime import datetime, timezone
+from app.utils.dependencies import require_role
 
 router = APIRouter()
 
 
-# 🔍 1. Get all pending complaints
+# 🔍 View pending
 @router.get("/admin/pending")
-async def get_pending_complaints():
-
+async def get_pending_complaints(
+    current_user: dict = Depends(require_role("admin"))
+):
     complaints = []
 
     cursor = complaints_collection.find({"status": "pending"})
@@ -21,9 +23,20 @@ async def get_pending_complaints():
     return complaints
 
 
-# ✅ 2. Approve complaint
+# ✅ Approve
 @router.post("/admin/{complaint_id}/approve")
-async def approve_complaint(complaint_id: str):
+async def approve_complaint(
+    complaint_id: str,
+    current_user: dict = Depends(require_role("admin"))
+):
+
+    complaint = await complaints_collection.find_one({"_id": ObjectId(complaint_id)})
+
+    if not complaint:
+        return {"error": "Complaint not found"}
+
+    if complaint["status"] != "pending":
+        return {"error": "Only pending complaints can be approved"}
 
     now = datetime.now(timezone.utc)
 
@@ -35,7 +48,7 @@ async def approve_complaint(complaint_id: str):
                 "logs": {
                     "status": "approved",
                     "time": now,
-                    "by": "admin_demo"
+                    "by": current_user["user_id"]
                 }
             }
         }
@@ -44,9 +57,21 @@ async def approve_complaint(complaint_id: str):
     return {"message": "Complaint approved"}
 
 
-# ❌ 3. Reject complaint
+# ❌ Reject
 @router.post("/admin/{complaint_id}/reject")
-async def reject_complaint(complaint_id: str, reason: str):
+async def reject_complaint(
+    complaint_id: str,
+    reason: str,
+    current_user: dict = Depends(require_role("admin"))
+):
+
+    complaint = await complaints_collection.find_one({"_id": ObjectId(complaint_id)})
+
+    if not complaint:
+        return {"error": "Complaint not found"}
+
+    if complaint["status"] != "pending":
+        return {"error": "Only pending complaints can be rejected"}
 
     now = datetime.now(timezone.utc)
 
@@ -61,7 +86,7 @@ async def reject_complaint(complaint_id: str, reason: str):
                 "logs": {
                     "status": "rejected",
                     "time": now,
-                    "by": "admin_demo",
+                    "by": current_user["user_id"],
                     "reason": reason
                 }
             }
