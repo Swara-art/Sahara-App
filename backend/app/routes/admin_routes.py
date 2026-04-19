@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.db.database import complaints_collection
+from app.db.database import complaints_collection, users_collection
 from bson import ObjectId
 from datetime import datetime, timezone
 from app.utils.dependencies import require_role
@@ -53,6 +53,10 @@ async def approve_complaint(
             }
         }
     )
+    await users_collection.update_one(
+    {"_id": ObjectId(complaint["user_id"])},
+    {"$inc": {"tokens": 200}}
+)
 
     return {"message": "Complaint approved"}
 

@@ -1,0 +1,110 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: radial-gradient(ellipse at 50% 0%, rgba(79,127,232,0.08) 0%, transparent 60%),
+              var(--color-bg);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.login-logo-icon { font-size: 2.2rem; }
+.login-logo-text {
+  font-size: 2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.login-error {
+  width: 100%;
+  background: rgba(232,84,84,0.1);
+  border: 1px solid rgba(232,84,84,0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--color-danger);
+  margin-bottom: 1rem;
+}
+
+.login-form { width: 100%; }
+
+.login-submit {
+  width: 100%;
+  justify-content: center;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+.login-back {
+  margin-top: 1.5rem;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+.login-back a:hover { color: var(--color-primary); }
+
+/* Mode toggle (Login / Sign Up) */
+.mode-toggle {
+  display: flex;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+.mode-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.mode-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+.mode-btn:hover:not(.active) { color: var(--color-text); }
+
+/* Success banner */
+.login-success {
+  width: 100%;
+  background: rgba(62,207,142,0.1);
+  border: 1px solid rgba(62,207,142,0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--color-success);
+  margin-bottom: 1rem;
+}
+

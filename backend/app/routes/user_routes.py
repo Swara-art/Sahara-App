@@ -13,8 +13,13 @@ async def signup(user: UserSignup):
 
     user_dict = user.model_dump()
 
-    # 🔐 hash password before storing
+    # 🔐 hash password
     user_dict["password"] = hash_password(user_dict["password"])
+
+    # 🔥 ADD THESE (THIS IS STEP 1)
+    user_dict["tokens"] = 0
+    user_dict["profile_pic"] = ""
+    user_dict["rewards"] = []
 
     result = await users_collection.insert_one(user_dict)
 
@@ -22,7 +27,6 @@ async def signup(user: UserSignup):
         "message": "User created successfully",
         "user_id": str(result.inserted_id)
     }
-
 
 # 🔥 2. LOGIN (with JWT)
 @router.post("/login")
