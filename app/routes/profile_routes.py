@@ -21,8 +21,8 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
 
     return {
         "name": user["name"],
-        "phone": user["phone"],
-        "tokens": user["tokens"],
+        "phone": user.get("phone", ""),
+        "tokens": user.get("tokens", 0),
         "profile_pic": user.get("profile_pic"),
         "my_complaints": complaints,
         "rewards": user.get("rewards", [])

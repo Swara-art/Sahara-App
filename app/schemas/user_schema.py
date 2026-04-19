@@ -7,6 +7,7 @@ class UserSignup(BaseModel):
     password: str = Field(..., min_length=6)
     pincode: str = Field(..., min_length=6, max_length=6)
     role: str = "citizen"  # default
+    department: str = None
 
 
 class UserLogin(BaseModel):

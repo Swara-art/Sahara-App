@@ -1,0 +1,118 @@
+import React from 'react';
+import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { 
+  LayoutDashboard, Map, ListTodo, ShieldCheck, 
+  Settings, LogOut, Ticket, User as UserIcon 
+} from 'lucide-react';
+
+// Sub-dashboards
+import CitizenDashboard from './CitizenDashboard';
+import AdminDashboard from './AdminDashboard';
+import MediatorDashboard from './MediatorDashboard';
+import AuthorityDashboard from './AuthorityDashboard';
+import Profile from './Profile';
+import CitizenOverview from './CitizenOverview';
+import MapView from './MapView';
+
+
+
+const Dashboard = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#000' }}>
+      {/* Sidebar */}
+      <aside className="glass" style={{ 
+        width: '280px', margin: '1rem', borderRadius: '24px', 
+        display: 'flex', flexDirection: 'column', padding: '2rem 1.5rem',
+        position: 'sticky', top: '1rem', height: 'calc(100vh - 2rem)'
+      }}>
+        <div className="brand-font" style={{ fontSize: '1.8rem', marginBottom: '3rem', paddingLeft: '1rem' }}>
+          SAHARA
+        </div>
+
+        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <SidebarLink to="/dashboard" icon={<LayoutDashboard size={20} />} label="Overview" />
+          
+          {user.role === 'citizen' && (
+            <>
+              <SidebarLink to="/dashboard/map" icon={<Map size={20} />} label="Nearby Issues" />
+              <SidebarLink to="/dashboard/rewards" icon={<Ticket size={20} />} label="Rewards" />
+            </>
+          )}
+
+
+
+          {user.role === 'authority' && (
+            <SidebarLink to="/dashboard/tasks" icon={<ListTodo size={20} />} label="My Tasks" />
+          )}
+
+          <div style={{ margin: '2rem 0', borderTop: '1px solid var(--border-glass)' }} />
+          <SidebarLink to="/dashboard/profile" icon={<UserIcon size={20} />} label="Profile" />
+          <SidebarLink to="/dashboard/settings" icon={<Settings size={20} />} label="Settings" />
+        </nav>
+
+        <button 
+          onClick={handleLogout}
+          className="btn btn-outline" 
+          style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--danger)', borderColor: 'transparent' }}
+        >
+          <LogOut size={20} /> Logout
+        </button>
+      </aside>
+
+      {/* Main Content */}
+      <main style={{ flex: 1, padding: '2rem 3rem 2rem 1rem', overflowY: 'auto' }}>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.8rem' }}>Welcome, {user.name}</h2>
+            <p style={{ color: 'var(--text-muted)' }}>Role: {user.role.charAt(0).toUpperCase() + user.role.slice(1)}</p>
+          </div>
+          <div className="glass" style={{ padding: '0.5rem 1.5rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }} />
+            <span>{user.email}</span>
+          </div>
+        </header>
+
+        <Routes>
+          <Route path="/" element={<RoleDispatcher role={user.role} />} />
+          <Route path="/map" element={<CitizenDashboard view="feed" />} />
+          <Route path="/full-map" element={<MapView />} />
+          <Route path="/rewards" element={<CitizenDashboard view="rewards" />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<div>Settings (Coming Soon)</div>} />
+        </Routes>
+      </main>
+    </div>
+  );
+};
+
+const SidebarLink = ({ to, icon, label }) => (
+  <Link to={to} style={{ 
+    display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem',
+    borderRadius: '12px', textDecoration: 'none', color: 'var(--text-muted)',
+    transition: 'var(--transition)'
+  }} className="nav-link">
+    {icon}
+    <span style={{ fontWeight: 500 }}>{label}</span>
+  </Link>
+);
+
+const RoleDispatcher = ({ role }) => {
+  switch(role) {
+    case 'citizen': return <CitizenOverview />;
+    case 'admin': return <AdminDashboard />;
+    case 'mediator': return <MediatorDashboard />;
+    case 'authority': return <AuthorityDashboard />;
+    default: return <div>Invalid Role</div>;
+  }
+};
+
+export default Dashboard;

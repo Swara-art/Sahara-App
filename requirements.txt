@@ -1,0 +1,17 @@
+fastapi==0.110.0
+email-validator==2.1.1
+uvicorn[standard]==0.29.0
+cloudinary==1.40.0
+python-multipart==0.0.9
+
+# Database
+motor==3.6.0
+dnspython==2.6.1
+psycopg2-binary==2.9.9   # PostgreSQL
+
+# Auth
+python-jose[cryptography]==3.3.0
+bcrypt==4.1.2
+
+# Environment variables
+python-dotenv==1.0.1

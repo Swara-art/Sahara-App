@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Depends, UploadFile, File
+from fastapi import APIRouter, Query, Depends, UploadFile, File, Form
 from app.db.database import complaints_collection, upvotes_collection, users_collection
 from app.utils.dependencies import get_current_user
 from datetime import datetime, timezone
@@ -37,12 +37,13 @@ def calculate_distance(lat1, lng1, lat2, lng2):
 
 # 🔥 CREATE COMPLAINT
 @router.post("/complaint")
+
 async def create_complaint(
-    title: str,
-    description: str,
-    lat: float,
-    lng: float,
-    location_text: str = None,
+    title: str = Form(...),
+    description: str = Form(...),
+    lat: float = Form(...),
+    lng: float = Form(...),
+    location_text: str = Form(None),
     image: UploadFile = File(None),
     current_user: dict = Depends(get_current_user)
 ):
@@ -91,6 +92,7 @@ async def get_all_complaints(
     lng: float,
     page: int = 1,
     limit: int = 10,
+    max_dist: int = Query(5000, alias="max_distance"),
     current_user: dict = Depends(get_current_user)
 ):
 
@@ -103,7 +105,7 @@ async def get_all_complaints(
                     "type": "Point",
                     "coordinates": [lng, lat]
                 },
-                "$maxDistance": 5000
+                "$maxDistance": max_dist
             }
         }
     }).skip(skip).limit(limit)
@@ -160,6 +162,9 @@ async def toggle_upvote(
 
     if distance > 5:
         return {"error": "You can only upvote nearby complaints"}
+
+    if complaint["user_id"] == user_id:
+        return {"error": "You cannot upvote your own complaint"}
 
     existing = await upvotes_collection.find_one({
         "user_id": user_id,
