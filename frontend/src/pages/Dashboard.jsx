@@ -3,19 +3,20 @@ import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, Map, ListTodo, ShieldCheck, 
-  Settings, LogOut, Ticket, User as UserIcon 
+  LogOut, Ticket, User as UserIcon, Route as RouteIcon,
+  Trophy, Activity
 } from 'lucide-react';
 
 // Sub-dashboards
-import CitizenDashboard from './CitizenDashboard';
 import AdminDashboard from './AdminDashboard';
 import MediatorDashboard from './MediatorDashboard';
 import AuthorityDashboard from './AuthorityDashboard';
 import Profile from './Profile';
 import CitizenOverview from './CitizenOverview';
 import MapView from './MapView';
-
-
+import MyActivity from './MyActivity';
+import Leaderboard from './Leaderboard';
+import Rewards from './Rewards';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -27,36 +28,44 @@ const Dashboard = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#000' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#000', color: '#fff' }}>
       {/* Sidebar */}
       <aside className="glass" style={{ 
         width: '280px', margin: '1rem', borderRadius: '24px', 
         display: 'flex', flexDirection: 'column', padding: '2rem 1.5rem',
         position: 'sticky', top: '1rem', height: 'calc(100vh - 2rem)'
       }}>
-        <div className="brand-font" style={{ fontSize: '1.8rem', marginBottom: '3rem', paddingLeft: '1rem' }}>
+        <div className="brand-font" style={{ fontSize: '1.8rem', marginBottom: '3rem', paddingLeft: '1rem', background: 'linear-gradient(to right, #7c3aed, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           SAHARA
         </div>
 
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <SidebarLink to="/dashboard" icon={<LayoutDashboard size={20} />} label="Overview" />
+          {(user?.role !== 'admin' && user?.role !== 'mediator') && (
+            <SidebarLink to="/dashboard" icon={<LayoutDashboard size={20} />} label="Overview" />
+          )}
           
-          {user.role === 'citizen' && (
+          {user?.role === 'citizen' && (
             <>
-              <SidebarLink to="/dashboard/map" icon={<Map size={20} />} label="Nearby Issues" />
+              <SidebarLink to="/dashboard/activity" icon={<Activity size={20} />} label="My Activity" />
+              <SidebarLink to="/dashboard/leaderboard" icon={<Trophy size={20} />} label="Leaderboard" />
               <SidebarLink to="/dashboard/rewards" icon={<Ticket size={20} />} label="Rewards" />
             </>
           )}
 
+          {user?.role === 'admin' && (
+            <SidebarLink to="/dashboard" icon={<ShieldCheck size={20} />} label="Review Queue" />
+          )}
 
+          {user?.role === 'mediator' && (
+            <SidebarLink to="/dashboard" icon={<RouteIcon size={20} />} label="Assignment Board" />
+          )}
 
-          {user.role === 'authority' && (
-            <SidebarLink to="/dashboard/tasks" icon={<ListTodo size={20} />} label="My Tasks" />
+          {user?.role === 'authority' && (
+            <SidebarLink to="/dashboard" icon={<ListTodo size={20} />} label="Department Tasks" />
           )}
 
           <div style={{ margin: '2rem 0', borderTop: '1px solid var(--border-glass)' }} />
           <SidebarLink to="/dashboard/profile" icon={<UserIcon size={20} />} label="Profile" />
-          <SidebarLink to="/dashboard/settings" icon={<Settings size={20} />} label="Settings" />
         </nav>
 
         <button 
@@ -72,22 +81,22 @@ const Dashboard = () => {
       <main style={{ flex: 1, padding: '2rem 3rem 2rem 1rem', overflowY: 'auto' }}>
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.8rem' }}>Welcome, {user.name}</h2>
-            <p style={{ color: 'var(--text-muted)' }}>Role: {user.role.charAt(0).toUpperCase() + user.role.slice(1)}</p>
+            <h2 style={{ fontSize: '1.8rem' }}>Welcome, {user?.name || 'User'}</h2>
+            <p style={{ color: 'var(--text-muted)' }}>{(user?.role || '').charAt(0).toUpperCase() + (user?.role || '').slice(1)} Dashboard</p>
           </div>
           <div className="glass" style={{ padding: '0.5rem 1.5rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }} />
-            <span>{user.email}</span>
+            <span style={{ fontSize: '0.9rem' }}>{user?.email || ''}</span>
           </div>
         </header>
 
         <Routes>
-          <Route path="/" element={<RoleDispatcher role={user.role} />} />
-          <Route path="/map" element={<CitizenDashboard view="feed" />} />
-          <Route path="/full-map" element={<MapView />} />
-          <Route path="/rewards" element={<CitizenDashboard view="rewards" />} />
+          <Route path="/" element={<RoleDispatcher role={user?.role} />} />
+          <Route path="/activity" element={<MyActivity />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/rewards" element={<Rewards />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<div>Settings (Coming Soon)</div>} />
+          <Route path="/full-map" element={<MapView />} />
         </Routes>
       </main>
     </div>

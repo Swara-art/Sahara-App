@@ -6,7 +6,7 @@ class UserSignup(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
     pincode: str = Field(..., min_length=6, max_length=6)
-    role: str = "citizen"  # default
+    role: str = "citizen"  
     department: str = None
 
 

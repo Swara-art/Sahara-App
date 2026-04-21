@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MapPin, ThumbsUp, Send, Image as ImageIcon } from 'lucide-react';
+import { Plus, MapPin, ThumbsUp, Trash2, Edit2, Image as ImageIcon, Send } from 'lucide-react';
 import api from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 
 const CitizenDashboard = ({ view = 'feed' }) => {
   const [complaints, setComplaints] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchComplaints();
@@ -14,7 +16,7 @@ const CitizenDashboard = ({ view = 'feed' }) => {
 
   const fetchComplaints = async () => {
     try {
-      // For now, getting all with a default location
+      // Default location for now
       const res = await api.get('/complaints?lat=19.076&lng=72.877');
       setComplaints(res.data.data);
     } catch (err) {
@@ -25,6 +27,10 @@ const CitizenDashboard = ({ view = 'feed' }) => {
   };
 
   const handleUpvote = async (id) => {
+    if (user.role !== 'citizen') {
+      alert('Only citizens can upvote.');
+      return;
+    }
     try {
       await api.post(`/complaint/${id}/upvote?lat=19.076&lng=72.877`);
       fetchComplaints();
@@ -33,15 +39,33 @@ const CitizenDashboard = ({ view = 'feed' }) => {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this complaint?')) {
+      try {
+        await api.delete(`/complaint/${id}`);
+        fetchComplaints();
+      } catch (err) {
+        alert('Delete failed. Backend endpoint might be missing.');
+      }
+    }
+  };
+
+  const handleEdit = (complaint) => {
+    alert('Edit feature coming soon (UI implementation ready).');
+    // In a real implementation, this would open the ReportModal with pre-filled data
+  };
+
   return (
     <div className="citizen-dashboard">
       {view !== 'rewards' ? (
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
             <h3 style={{ fontSize: '1.5rem' }}>Community Feed</h3>
-            <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
-              <Plus size={20} /> New Post
-            </button>
+            {user.role === 'citizen' && (
+              <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
+                <Plus size={20} /> New Post
+              </button>
+            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -52,6 +76,9 @@ const CitizenDashboard = ({ view = 'feed' }) => {
                 key={complaint._id} 
                 complaint={complaint} 
                 onUpvote={() => handleUpvote(complaint._id)} 
+                onDelete={() => handleDelete(complaint._id)}
+                onEdit={() => handleEdit(complaint)}
+                canManage={user.role === 'citizen' && complaint.user_id === user.user_id}
               />
             ))}
           </div>
@@ -59,7 +86,6 @@ const CitizenDashboard = ({ view = 'feed' }) => {
       ) : (
         <RewardsView />
       )}
-
 
       <AnimatePresence>
         {isModalOpen && (
@@ -69,6 +95,77 @@ const CitizenDashboard = ({ view = 'feed' }) => {
     </div>
   );
 };
+
+const ComplaintCard = ({ complaint, onUpvote, onDelete, onEdit, canManage }) => (
+  <motion.div 
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="glass" 
+    style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border-glass)' }}
+  >
+    <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold' }}>
+          {complaint.user_id.slice(-2).toUpperCase()}
+        </div>
+        <div>
+          <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{complaint.user_id.slice(-8)}</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+            <MapPin size={10} /> {complaint.location_text || 'Nearby'} • {complaint.distance_km}km
+          </div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {canManage && complaint.status === 'pending' && (
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={onEdit} className="btn-icon" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', padding: '0.4rem', borderRadius: '8px' }}>
+              <Edit2 size={16} />
+            </button>
+            <button onClick={onDelete} className="btn-icon" style={{ background: 'rgba(255,48,64,0.1)', border: 'none', color: '#ff3040', padding: '0.4rem', borderRadius: '8px' }}>
+              <Trash2 size={16} />
+            </button>
+          </div>
+        )}
+        <div style={{ fontSize: '0.7rem', color: getStatusColor(complaint.status), fontWeight: 700, textTransform: 'uppercase' }}>
+          {complaint.status}
+        </div>
+      </div>
+    </div>
+
+    <div style={{ background: '#111', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {complaint.image_url ? (
+        <img src={complaint.image_url} alt="post" style={{ width: '100%', maxHeight: '600px', objectFit: 'contain' }} />
+      ) : (
+        <div style={{ color: '#333', textAlign: 'center' }}>
+          <ImageIcon size={48} style={{ marginBottom: '1rem', opacity: 0.2 }} />
+          <p style={{ opacity: 0.2 }}>No media attached</p>
+        </div>
+      )}
+    </div>
+
+    <div style={{ padding: '1rem 1rem 0.5rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.8rem', alignItems: 'center' }}>
+        <motion.button 
+          whileTap={{ scale: 0.9 }}
+          onClick={onUpvote}
+          style={{ background: 'transparent', border: 'none', color: complaint.has_upvoted ? '#ff3040' : 'white', cursor: 'pointer', padding: 0 }}
+        >
+          <ThumbsUp size={24} fill={complaint.has_upvoted ? 'currentColor' : 'none'} />
+        </motion.button>
+        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{complaint.upvotes} upvotes</span>
+      </div>
+      
+      <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
+        <span style={{ fontWeight: 700, marginRight: '0.5rem' }}>{complaint.title}</span>
+        <span style={{ color: 'var(--text-muted)' }}>{complaint.description}</span>
+      </div>
+
+      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.8rem', textTransform: 'uppercase' }}>
+        {new Date(complaint.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
+      </div>
+    </div>
+  </motion.div>
+);
 
 const RewardsView = () => {
   const [vouchers, setVouchers] = useState([]);
@@ -80,13 +177,17 @@ const RewardsView = () => {
   }, []);
 
   const fetchVouchers = async () => {
-    const res = await api.get('/vouchers');
-    setVouchers(res.data);
+    try {
+      const res = await api.get('/vouchers');
+      setVouchers(res.data);
+    } catch (err) { console.error(err); }
   };
 
   const fetchProfile = async () => {
-    const res = await api.get('/profile');
-    setTokens(res.data.tokens);
+    try {
+      const res = await api.get('/profile');
+      setTokens(res.data.tokens);
+    } catch (err) { console.error(err); }
   };
 
   const handleBuy = async (id) => {
@@ -125,74 +226,6 @@ const RewardsView = () => {
   );
 };
 
-
-const ComplaintCard = ({ complaint, onUpvote }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="glass" 
-    style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border-glass)' }}
-  >
-    {/* Header */}
-    <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold' }}>
-          {complaint.user_id.slice(-2).toUpperCase()}
-        </div>
-        <div>
-          <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{complaint.user_id.slice(-8)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-            <MapPin size={10} /> {complaint.location_text || 'Nearby'} • {complaint.distance_km}km
-          </div>
-        </div>
-      </div>
-      <div style={{ fontSize: '0.7rem', color: getStatusColor(complaint.status), fontWeight: 700, textTransform: 'uppercase' }}>
-        {complaint.status}
-      </div>
-    </div>
-
-    {/* Media */}
-    <div style={{ background: '#111', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {complaint.image_url ? (
-        <img src={complaint.image_url} alt="post" style={{ width: '100%', maxHeight: '600px', objectFit: 'contain' }} />
-      ) : (
-        <div style={{ color: '#333', textAlign: 'center' }}>
-          <ImageIcon size={48} style={{ marginBottom: '1rem', opacity: 0.2 }} />
-          <p style={{ opacity: 0.2 }}>No media attached</p>
-        </div>
-      )}
-    </div>
-
-    {/* Actions */}
-    <div style={{ padding: '1rem 1rem 0.5rem' }}>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.8rem' }}>
-        <motion.button 
-          whileTap={{ scale: 0.9 }}
-          onClick={onUpvote}
-          style={{ background: 'transparent', border: 'none', color: complaint.has_upvoted ? '#ff3040' : 'white', cursor: 'pointer', padding: 0 }}
-        >
-          <ThumbsUp size={24} fill={complaint.has_upvoted ? 'currentColor' : 'none'} />
-        </motion.button>
-        <Send size={24} style={{ cursor: 'pointer', opacity: 0.8 }} />
-      </div>
-      
-      <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-        {complaint.upvotes} upvotes
-      </div>
-
-      <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
-        <span style={{ fontWeight: 700, marginRight: '0.5rem' }}>{complaint.title}</span>
-        <span style={{ color: 'var(--text-muted)' }}>{complaint.description}</span>
-      </div>
-
-      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.8rem', textTransform: 'uppercase' }}>
-        {new Date(complaint.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
-      </div>
-    </div>
-  </motion.div>
-);
-
-
 const ReportModal = ({ onClose, onRefresh }) => {
   const [formData, setFormData] = useState({ title: '', description: '', lat: 19.076, lng: 72.877, location_text: '' });
   const [file, setFile] = useState(null);
@@ -210,7 +243,6 @@ const ReportModal = ({ onClose, onRefresh }) => {
     }
   }, []);
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -224,7 +256,6 @@ const ReportModal = ({ onClose, onRefresh }) => {
       if (file) data.append('image', file);
 
       await api.post('/complaint', data);
-
       onRefresh();
       onClose();
     } catch (err) {
@@ -307,3 +338,4 @@ const inputStyle = {
 };
 
 export default CitizenDashboard;
+

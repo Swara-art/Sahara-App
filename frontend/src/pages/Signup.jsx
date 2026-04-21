@@ -72,16 +72,9 @@ const Signup = () => {
           
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ color: 'var(--text-muted)', fontSize: '0.9rem', display: 'block', marginBottom: '0.5rem' }}>I am a:</label>
-            <select 
-              style={{ ...inputStyle, cursor: 'pointer' }}
-              value={formData.role}
-              onChange={(e) => setFormData({...formData, role: e.target.value})}
-            >
-              <option value="citizen">Citizen</option>
-              <option value="admin">Admin</option>
-              <option value="mediator">Mediator</option>
-              <option value="authority">Authority</option>
-            </select>
+            <div style={{ ...inputStyle, cursor: 'default', color: 'var(--text-primary)' }}>
+              Citizen
+            </div>
           </div>
 
           {formData.role === 'authority' && (

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
-from app.db.database import complaints_collection, users_collection, upvotes_collection
+from db.database import complaints_collection, users_collection, upvotes_collection
 from bson import ObjectId
 from datetime import datetime, timezone
-from app.utils.dependencies import require_role
+from utils.dependencies import require_role
 
 router = APIRouter()
 

@@ -1,8 +1,8 @@
 from fastapi import APIRouter
-from app.schemas.user_schema import UserSignup, UserLogin
-from app.db.database import users_collection
-from app.utils.hash import hash_password, verify_password
-from app.utils.jwt_handler import create_access_token
+from schemas.user_schema import UserSignup, UserLogin
+from db.database import users_collection
+from utils.hash import hash_password, verify_password
+from utils.jwt_handler import create_access_token
 
 router = APIRouter()
 
@@ -16,7 +16,10 @@ async def signup(user: UserSignup):
     # 🔐 hash password
     user_dict["password"] = hash_password(user_dict["password"])
 
-    # 🔥 ADD THESE (THIS IS STEP 1)
+    # 🔥 FORCE ROLE
+    user_dict["role"] = "citizen"
+
+    # 🔥 default fields
     user_dict["tokens"] = 0
     user_dict["profile_pic"] = ""
     user_dict["rewards"] = []
@@ -26,7 +29,7 @@ async def signup(user: UserSignup):
     # Generate token for automatic login
     token = create_access_token({
         "user_id": str(result.inserted_id),
-        "role": user_dict["role"],
+        "role": "citizen",
         "name": user_dict["name"],
         "department": user_dict.get("department")
     })

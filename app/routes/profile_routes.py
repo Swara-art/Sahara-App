@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from app.utils.dependencies import get_current_user
-from app.db.database import users_collection, complaints_collection
+from utils.dependencies import get_current_user
+from db.database import users_collection, complaints_collection
 from bson import ObjectId
 
 router = APIRouter()
@@ -18,6 +18,10 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
     complaints = await complaints_collection.find({
         "user_id": user_id
     }).to_list(100)
+
+    # 🔥 FIX HERE
+    for c in complaints:
+        c["_id"] = str(c["_id"])
 
     return {
         "name": user["name"],
@@ -57,4 +61,4 @@ async def leaderboard():
     users = await users_collection.find().sort("tokens", -1).limit(10).to_list(10)
     for user in users:
         user["_id"] = str(user["_id"])
-    return users
+    return users

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from app.utils.dependencies import get_current_user
-from app.db.database import users_collection, vouchers_collection
+from utils.dependencies import get_current_user
+from db.database import users_collection, vouchers_collection
 from bson import ObjectId
 
 router = APIRouter()
@@ -8,7 +8,12 @@ router = APIRouter()
 
 @router.get("/vouchers")
 async def get_vouchers():
-    return await vouchers_collection.find().to_list(10)
+    vouchers = await vouchers_collection.find().to_list(10)
+
+    for v in vouchers:
+        v["_id"] = str(v["_id"])
+
+    return vouchers
 
 
 @router.post("/vouchers/buy/{voucher_id}")

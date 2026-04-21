@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query, Depends, UploadFile, File, Form
-from app.db.database import complaints_collection, upvotes_collection, users_collection
-from app.utils.dependencies import get_current_user
+from db.database import complaints_collection, upvotes_collection, users_collection
+from utils.dependencies import get_current_user
 from datetime import datetime, timezone
 from bson import ObjectId
 import cloudinary.uploader
@@ -286,4 +286,4 @@ async def search_nearby_complaints(
         
         final_complaints.append(c)
 
-    return final_complaints
+    return final_complaints

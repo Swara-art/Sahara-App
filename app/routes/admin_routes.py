@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
-from app.db.database import complaints_collection, users_collection
+from db.database import complaints_collection, users_collection
 from bson import ObjectId
 from datetime import datetime, timezone
-from app.utils.dependencies import require_role
+from utils.dependencies import require_role
 
 router = APIRouter()
 
@@ -27,6 +27,7 @@ async def get_pending_complaints(
 @router.post("/admin/{complaint_id}/approve")
 async def approve_complaint(
     complaint_id: str,
+    message: str = "",
     current_user: dict = Depends(require_role("admin"))
 ):
 
@@ -43,12 +44,16 @@ async def approve_complaint(
     await complaints_collection.update_one(
         {"_id": ObjectId(complaint_id)},
         {
-            "$set": {"status": "approved"},
+            "$set": {
+                "status": "approved",
+                "admin_message": message
+            },
             "$push": {
                 "logs": {
                     "status": "approved",
                     "time": now,
-                    "by": current_user["user_id"]
+                    "by": current_user["user_id"],
+                    "remark": message
                 }
             }
         }
