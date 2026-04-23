@@ -8,15 +8,15 @@ import {
 } from 'lucide-react';
 
 // Sub-dashboards
-import AdminDashboard from './AdminDashboard';
-import MediatorDashboard from './MediatorDashboard';
-import AuthorityDashboard from './AuthorityDashboard';
-import Profile from './Profile';
-import CitizenOverview from './CitizenOverview';
-import MapView from './MapView';
-import MyActivity from './MyActivity';
-import Leaderboard from './Leaderboard';
-import Rewards from './Rewards';
+const AdminDashboard = React.lazy(() => import('./AdminDashboard'));
+const MediatorDashboard = React.lazy(() => import('./MediatorDashboard'));
+const AuthorityDashboard = React.lazy(() => import('./AuthorityDashboard'));
+const Profile = React.lazy(() => import('./Profile'));
+const CitizenOverview = React.lazy(() => import('./CitizenOverview'));
+const MapView = React.lazy(() => import('./MapView'));
+const MyActivity = React.lazy(() => import('./MyActivity'));
+const Leaderboard = React.lazy(() => import('./Leaderboard'));
+const Rewards = React.lazy(() => import('./Rewards'));
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -90,14 +90,16 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <Routes>
-          <Route path="/" element={<RoleDispatcher role={user?.role} />} />
-          <Route path="/activity" element={<MyActivity />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/rewards" element={<Rewards />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/full-map" element={<MapView />} />
-        </Routes>
+        <React.Suspense fallback={<div style={{ padding: '2rem', color: 'var(--text-muted)' }}>Loading section...</div>}>
+          <Routes>
+            <Route path="/" element={<RoleDispatcher role={user?.role} />} />
+            <Route path="/activity" element={<MyActivity />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/rewards" element={<Rewards />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/full-map" element={<MapView />} />
+          </Routes>
+        </React.Suspense>
       </main>
     </div>
   );

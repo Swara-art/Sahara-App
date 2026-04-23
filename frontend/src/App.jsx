@@ -3,10 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Pages (to be created)
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
+const Home = React.lazy(() => import('./pages/Home'));
+const Login = React.lazy(() => import('./pages/Login'));
+const Signup = React.lazy(() => import('./pages/Signup'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
@@ -22,19 +22,21 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route 
-            path="/dashboard/*" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-        </Routes>
+        <React.Suspense fallback={<div style={{ background: '#000', color: '#fff', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Sahara...</div>}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route 
+              path="/dashboard/*" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
+        </React.Suspense>
       </Router>
     </AuthProvider>
   );
