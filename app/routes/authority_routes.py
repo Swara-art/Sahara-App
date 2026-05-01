@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form, File, UploadFile
 from db.database import complaints_collection, users_collection, upvotes_collection
 from bson import ObjectId
 from datetime import datetime, timezone
 from utils.dependencies import require_role
+import cloudinary.uploader
 
 router = APIRouter()
 
@@ -18,7 +19,7 @@ async def get_assigned_complaints(
 
     cursor = complaints_collection.find({
         "status": {"$in": ["assigned", "in_progress", "resolved"]},
-        "assigned_to": department
+        "department": department
     })
 
     async for complaint in cursor:
@@ -66,7 +67,8 @@ async def start_work(
 @router.post("/authority/{complaint_id}/resolve")
 async def resolve_complaint(
     complaint_id: str,
-    remark: str,
+    remark: str = Form(...),
+    proof: UploadFile = File(None),
     current_user: dict = Depends(require_role("authority"))
 ):
 
@@ -82,13 +84,23 @@ async def resolve_complaint(
 
     now = datetime.now(timezone.utc)
 
+    # 🔥 handle proof image
+    resolution_image = ""
+    if proof:
+        try:
+            upload_result = cloudinary.uploader.upload(proof.file)
+            resolution_image = upload_result["secure_url"]
+        except Exception as e:
+            print(f"Cloudinary error: {e}")
+
     # 🔥 update complaint
     await complaints_collection.update_one(
         {"_id": ObjectId(complaint_id)},
         {
             "$set": {
                 "status": "resolved",
-                "resolution_remark": remark
+                "resolution_remark": remark,
+                "resolution_image": resolution_image
             },
             "$push": {
                 "logs": {
@@ -118,4 +130,4 @@ async def resolve_complaint(
             {"$inc": {"tokens": 10}}
         )
 
-    return {"message": "Complaint resolved"}
+    return {"message": "Complaint resolved"}

@@ -24,11 +24,16 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
         c["_id"] = str(c["_id"])
 
     return {
+        "user_id": str(user["_id"]),
         "name": user["name"],
+        "email": user["email"],
+        "role": user["role"],
         "phone": user.get("phone", ""),
         "tokens": user.get("tokens", 0),
         "profile_pic": user.get("profile_pic"),
+        "department": user.get("department"),
         "my_complaints": complaints,
+        "vouchers": user.get("vouchers", []),
         "rewards": user.get("rewards", [])
     }
 
@@ -58,7 +63,9 @@ async def update_profile(
 
 @router.get("/leaderboard")
 async def leaderboard():
-    users = await users_collection.find().sort("tokens", -1).limit(10).to_list(10)
+    users = await users_collection.find(
+        {"role": "citizen"}
+    ).sort("tokens", -1).limit(10).to_list(10)
     for user in users:
         user["_id"] = str(user["_id"])
     return users

@@ -16,8 +16,9 @@ async def signup(user: UserSignup):
     # 🔐 hash password
     user_dict["password"] = hash_password(user_dict["password"])
 
-    # 🔥 FORCE ROLE
-    user_dict["role"] = "citizen"
+    # 🔥 ROLE SELECTION (Citizen or Authority only)
+    if user_dict["role"] not in ["citizen", "authority"]:
+        user_dict["role"] = "citizen"
 
     # 🔥 default fields
     user_dict["tokens"] = 0

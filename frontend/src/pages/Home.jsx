@@ -57,7 +57,8 @@ const Home = () => {
         <div className="brand-font" style={{ fontSize: '1.5rem', background: 'linear-gradient(to right, #7c3aed, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           SAHARA
         </div>
-        <div style={{ display: 'flex', gap: '2rem' }}>
+        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <Link to="/resolved" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }} className="hover-primary">Impact Gallery</Link>
           <Link to="/login" className="btn btn-outline">Login</Link>
           <Link to="/signup" className="btn btn-primary">Join Now</Link>
         </div>

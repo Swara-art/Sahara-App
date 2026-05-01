@@ -4,12 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, Map, ListTodo, ShieldCheck, 
   LogOut, Ticket, User as UserIcon, Route as RouteIcon,
-  Trophy, Activity
+  Trophy, Activity, Newspaper
 } from 'lucide-react';
 
 // Sub-dashboards
-import AdminDashboard from './AdminDashboard';
-import MediatorDashboard from './MediatorDashboard';
 import AuthorityDashboard from './AuthorityDashboard';
 import Profile from './Profile';
 import CitizenOverview from './CitizenOverview';
@@ -17,6 +15,7 @@ import MapView from './MapView';
 import MyActivity from './MyActivity';
 import Leaderboard from './Leaderboard';
 import Rewards from './Rewards';
+import CitizenDashboard from './CitizenDashboard';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -40,24 +39,14 @@ const Dashboard = () => {
         </div>
 
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {(user?.role !== 'admin' && user?.role !== 'mediator') && (
-            <SidebarLink to="/dashboard" icon={<LayoutDashboard size={20} />} label="Overview" />
-          )}
-          
           {user?.role === 'citizen' && (
             <>
+              <SidebarLink to="/dashboard" icon={<LayoutDashboard size={20} />} label="Overview" />
+              <SidebarLink to="/dashboard/feed" icon={<Newspaper size={20} />} label="Community Feed" />
               <SidebarLink to="/dashboard/activity" icon={<Activity size={20} />} label="My Activity" />
               <SidebarLink to="/dashboard/leaderboard" icon={<Trophy size={20} />} label="Leaderboard" />
               <SidebarLink to="/dashboard/rewards" icon={<Ticket size={20} />} label="Rewards" />
             </>
-          )}
-
-          {user?.role === 'admin' && (
-            <SidebarLink to="/dashboard" icon={<ShieldCheck size={20} />} label="Review Queue" />
-          )}
-
-          {user?.role === 'mediator' && (
-            <SidebarLink to="/dashboard" icon={<RouteIcon size={20} />} label="Assignment Board" />
           )}
 
           {user?.role === 'authority' && (
@@ -92,6 +81,7 @@ const Dashboard = () => {
 
         <Routes>
           <Route path="/" element={<RoleDispatcher role={user?.role} />} />
+          <Route path="/feed" element={<CitizenDashboard />} />
           <Route path="/activity" element={<MyActivity />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/rewards" element={<Rewards />} />
@@ -117,8 +107,6 @@ const SidebarLink = ({ to, icon, label }) => (
 const RoleDispatcher = ({ role }) => {
   switch(role) {
     case 'citizen': return <CitizenOverview />;
-    case 'admin': return <AdminDashboard />;
-    case 'mediator': return <MediatorDashboard />;
     case 'authority': return <AuthorityDashboard />;
     default: return <div>Invalid Role</div>;
   }

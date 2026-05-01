@@ -15,19 +15,22 @@ async def get_vouchers():
 
     return vouchers
 
-
 @router.post("/vouchers/buy/{voucher_id}")
 async def buy_voucher(
     voucher_id: str,
     current_user: dict = Depends(get_current_user)
 ):
+    # Block authorities
+    if current_user["role"] != "citizen":
+        return {"error": "Only citizens can purchase vouchers"}
 
     user_id = current_user["user_id"]
 
     user = await users_collection.find_one({"_id": ObjectId(user_id)})
     voucher = await vouchers_collection.find_one({"_id": voucher_id})
 
-    if user["tokens"] < voucher["cost"]:
+    # Safe token check
+    if user.get("tokens", 0) < voucher["cost"]:
         return {"error": "Not enough tokens"}
 
     await users_collection.update_one(

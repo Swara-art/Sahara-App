@@ -1,33 +1,39 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from routes.citizen_routes import router as citizen_router
-from routes.admin_routes import router as admin_router
-from routes.mediator_routes import router as mediator_router
 from routes.authority_routes import router as authority_router
 from routes.user_routes import router as user_router
-# from app.routes.volunteer_routes import router as volunteer_router
-import utils.cloudinary_config
-from fastapi.middleware.cors import CORSMiddleware
 from routes import profile_routes, voucher_routes
+import utils.cloudinary_config
 
-app = FastAPI()
+app = FastAPI(title="Sahara AI Backend", description="AI-Driven Civic Complaint Management System")
 
-app.include_router(citizen_router)
-app.include_router(admin_router)
-app.include_router(mediator_router)
-app.include_router(authority_router)
-app.include_router(user_router)
-app.include_router(profile_routes.router)
-app.include_router(voucher_routes.router)
-
+# 🔥 CORS CONFIGURATION
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# 🔥 ROUTES (Admin and Mediator removed in favor of AI-driven architecture)
+app.include_router(user_router, tags=["Authentication"])
+app.include_router(citizen_router, tags=["Citizen Operations"])
+app.include_router(authority_router, tags=["Authority Operations"])
+app.include_router(profile_routes.router, tags=["User Profile"])
+app.include_router(voucher_routes.router, tags=["Rewards & Vouchers"])
+
 @app.get("/")
 async def root():
-    return {"message": "Backend running with DB 🚀"}
+    return {
+        "message": "Sahara AI Backend is live 🚀",
+        "roles": ["citizen", "authority"],
+        "architecture": "AI-Driven Validation & Routing"
+    }

@@ -1,341 +1,308 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MapPin, ThumbsUp, Trash2, Edit2, Image as ImageIcon, Send } from 'lucide-react';
+import { Plus, MapPin, ThumbsUp, Filter, Search, ChevronDown, Clock, BarChart2, User, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import ComplaintForm from '../components/ComplaintForm';
+import StatusBadge from '../components/StatusBadge';
 
-const CitizenDashboard = ({ view = 'feed' }) => {
+const CitizenDashboard = () => {
   const [complaints, setComplaints] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userLoc, setUserLoc] = useState({ lat: 19.076, lng: 72.877 }); // Default fallback
+  const [filters, setFilters] = useState({ category: '', status: '' });
+  const [showFilters, setShowFilters] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchComplaints();
+  const fetchLocation = useCallback(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        setUserLoc({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      });
+    }
   }, []);
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
+    setLoading(true);
     try {
-      // Default location for now
-      const res = await api.get('/complaints?lat=19.076&lng=72.877');
-      setComplaints(res.data.data);
+      let url = `/complaints?lat=${userLoc.lat}&lng=${userLoc.lng}`;
+      if (filters.category) url += `&category=${filters.category}`;
+      if (filters.status) url += `&status=${filters.status}`;
+      
+      const res = await api.get(url);
+      setComplaints(res.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [userLoc, filters]);
+
+  useEffect(() => {
+    fetchLocation();
+  }, [fetchLocation]);
+
+  useEffect(() => {
+    fetchComplaints();
+  }, [fetchComplaints]);
 
   const handleUpvote = async (id) => {
-    if (user.role !== 'citizen') {
-      alert('Only citizens can upvote.');
-      return;
-    }
     try {
-      await api.post(`/complaint/${id}/upvote?lat=19.076&lng=72.877`);
+      await api.post(`/complaint/${id}/upvote?lat=${userLoc.lat}&lng=${userLoc.lng}`);
+      // Optimistic update or just refetch
       fetchComplaints();
     } catch (err) {
-      alert(err.response?.data?.error || 'Cannot upvote');
+      alert(err.response?.data?.error || 'Upvote failed. You might be too far away.');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this complaint?')) {
-      try {
-        await api.delete(`/complaint/${id}`);
-        fetchComplaints();
-      } catch (err) {
-        alert('Delete failed. Backend endpoint might be missing.');
-      }
-    }
-  };
-
-  const handleEdit = (complaint) => {
-    alert('Edit feature coming soon (UI implementation ready).');
-    // In a real implementation, this would open the ReportModal with pre-filled data
-  };
+  const categories = ['Pothole', 'Garbage', 'Street Light', 'Water Leak', 'Encroachment', 'Other'];
+  const statuses = ['pending', 'approved', 'assigned', 'in_progress', 'resolved', 'rejected'];
 
   return (
-    <div className="citizen-dashboard">
-      {view !== 'rewards' ? (
-        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-            <h3 style={{ fontSize: '1.5rem' }}>Community Feed</h3>
-            {user.role === 'citizen' && (
-              <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
-                <Plus size={20} /> New Post
-              </button>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            {loading ? (
-              <div style={{ textAlign: 'center', padding: '3rem' }}>Loading feed...</div>
-            ) : complaints.map(complaint => (
-              <ComplaintCard 
-                key={complaint._id} 
-                complaint={complaint} 
-                onUpvote={() => handleUpvote(complaint._id)} 
-                onDelete={() => handleDelete(complaint._id)}
-                onEdit={() => handleEdit(complaint)}
-                canManage={user.role === 'citizen' && complaint.user_id === user.user_id}
-              />
-            ))}
-          </div>
+    <div className="citizen-dashboard" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      {/* Header Section */}
+      <div style={headerSectionStyle}>
+        <div>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.5rem' }}>Community Feed</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Showing verified issues within 5km of your location</p>
         </div>
-      ) : (
-        <RewardsView />
-      )}
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            onClick={() => setShowFilters(!showFilters)} 
+            className="btn btn-outline"
+            style={{ borderColor: showFilters ? 'var(--primary)' : 'var(--border-glass)' }}
+          >
+            <Filter size={18} /> Filters
+          </button>
+          <button onClick={() => setIsModalOpen(true)} className="btn btn-primary" style={{ padding: '0.8rem 2rem', borderRadius: '16px' }}>
+            <Plus size={20} /> Report Issue
+          </button>
+        </div>
+      </div>
+
+      {/* Filters Panel */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            style={filterPanelStyle}
+          >
+            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+              <div style={filterGroupStyle}>
+                <label style={filterLabelStyle}>Category</label>
+                <select 
+                  style={selectStyle} 
+                  value={filters.category}
+                  onChange={e => setFilters({...filters, category: e.target.value})}
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div style={filterGroupStyle}>
+                <label style={filterLabelStyle}>Status</label>
+                <select 
+                  style={selectStyle} 
+                  value={filters.status}
+                  onChange={e => setFilters({...filters, status: e.target.value})}
+                >
+                  <option value="">All Statuses</option>
+                  {statuses.map(s => <option key={s} value={s}>{s.replace('_', ' ').toUpperCase()}</option>)}
+                </select>
+              </div>
+              <button 
+                className="btn btn-outline" 
+                style={{ alignSelf: 'flex-end', padding: '0.6rem 1.2rem' }}
+                onClick={() => setFilters({ category: '', status: '' })}
+              >
+                Clear All
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Feed Grid */}
+      <div style={feedGridStyle}>
+        {loading ? (
+          <div style={emptyStateStyle}>
+            <Loader2 size={48} className="animate-spin" style={{ color: 'var(--primary)', marginBottom: '1rem' }} />
+            <h3>Syncing with Community Hub...</h3>
+          </div>
+        ) : complaints.length === 0 ? (
+          <div style={emptyStateStyle}>
+            <Search size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+            <h3>No complaints found</h3>
+            <p style={{ color: 'var(--text-muted)' }}>Try adjusting your filters or be the first to report!</p>
+          </div>
+        ) : (
+          complaints.map(complaint => (
+            <ComplaintCard 
+              key={complaint._id} 
+              complaint={complaint} 
+              onUpvote={() => handleUpvote(complaint._id)} 
+            />
+          ))
+        )}
+      </div>
 
       <AnimatePresence>
         {isModalOpen && (
-          <ReportModal onClose={() => setIsModalOpen(false)} onRefresh={fetchComplaints} />
+          <ComplaintForm onClose={() => setIsModalOpen(false)} onRefresh={fetchComplaints} />
         )}
       </AnimatePresence>
     </div>
   );
 };
 
-const ComplaintCard = ({ complaint, onUpvote, onDelete, onEdit, canManage }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="glass" 
-    style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border-glass)' }}
-  >
-    <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold' }}>
-          {complaint.user_id.slice(-2).toUpperCase()}
-        </div>
-        <div>
-          <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{complaint.user_id.slice(-8)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-            <MapPin size={10} /> {complaint.location_text || 'Nearby'} • {complaint.distance_km}km
-          </div>
-        </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        {canManage && complaint.status === 'pending' && (
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button onClick={onEdit} className="btn-icon" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', padding: '0.4rem', borderRadius: '8px' }}>
-              <Edit2 size={16} />
-            </button>
-            <button onClick={onDelete} className="btn-icon" style={{ background: 'rgba(255,48,64,0.1)', border: 'none', color: '#ff3040', padding: '0.4rem', borderRadius: '8px' }}>
-              <Trash2 size={16} />
-            </button>
-          </div>
-        )}
-        <div style={{ fontSize: '0.7rem', color: getStatusColor(complaint.status), fontWeight: 700, textTransform: 'uppercase' }}>
-          {complaint.status}
-        </div>
-      </div>
-    </div>
-
-    <div style={{ background: '#111', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {complaint.image_url ? (
-        <img src={complaint.image_url} alt="post" style={{ width: '100%', maxHeight: '600px', objectFit: 'contain' }} />
-      ) : (
-        <div style={{ color: '#333', textAlign: 'center' }}>
-          <ImageIcon size={48} style={{ marginBottom: '1rem', opacity: 0.2 }} />
-          <p style={{ opacity: 0.2 }}>No media attached</p>
-        </div>
-      )}
-    </div>
-
-    <div style={{ padding: '1rem 1rem 0.5rem' }}>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.8rem', alignItems: 'center' }}>
-        <motion.button 
-          whileTap={{ scale: 0.9 }}
-          onClick={onUpvote}
-          style={{ background: 'transparent', border: 'none', color: complaint.has_upvoted ? '#ff3040' : 'white', cursor: 'pointer', padding: 0 }}
-        >
-          <ThumbsUp size={24} fill={complaint.has_upvoted ? 'currentColor' : 'none'} />
-        </motion.button>
-        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{complaint.upvotes} upvotes</span>
-      </div>
-      
-      <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
-        <span style={{ fontWeight: 700, marginRight: '0.5rem' }}>{complaint.title}</span>
-        <span style={{ color: 'var(--text-muted)' }}>{complaint.description}</span>
-      </div>
-
-      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.8rem', textTransform: 'uppercase' }}>
-        {new Date(complaint.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
-      </div>
-    </div>
-  </motion.div>
-);
-
-const RewardsView = () => {
-  const [vouchers, setVouchers] = useState([]);
-  const [tokens, setTokens] = useState(0);
-
-  useEffect(() => {
-    fetchVouchers();
-    fetchProfile();
-  }, []);
-
-  const fetchVouchers = async () => {
-    try {
-      const res = await api.get('/vouchers');
-      setVouchers(res.data);
-    } catch (err) { console.error(err); }
-  };
-
-  const fetchProfile = async () => {
-    try {
-      const res = await api.get('/profile');
-      setTokens(res.data.tokens);
-    } catch (err) { console.error(err); }
-  };
-
-  const handleBuy = async (id) => {
-    try {
-      await api.post(`/vouchers/buy/${id}`);
-      fetchProfile();
-      alert('Voucher purchased!');
-    } catch (err) {
-      alert('Not enough tokens');
-    }
-  };
-
-  return (
-    <div className="rewards-view">
-      <div className="glass" style={{ padding: '2rem', borderRadius: '24px', marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h3 style={{ fontSize: '1.5rem' }}>My Tokens</h3>
-          <p style={{ color: 'var(--text-muted)' }}>Contribute more to earn rewards</p>
-        </div>
-        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--primary)' }}>{tokens}</div>
-      </div>
-
-      <h3 style={{ marginBottom: '1.5rem' }}>Available Vouchers</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-        {vouchers.map(v => (
-          <div key={v._id} className="glass" style={{ padding: '2rem', borderRadius: '24px', textAlign: 'center' }}>
-            <h4 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>{v.name}</h4>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{v.description}</p>
-            <button onClick={() => handleBuy(v._id)} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-              Buy for {v.cost} tokens
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const ReportModal = ({ onClose, onRefresh }) => {
-  const [formData, setFormData] = useState({ title: '', description: '', lat: 19.076, lng: 72.877, location_text: '' });
-  const [file, setFile] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        setFormData(prev => ({
-          ...prev,
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        }));
-      });
-    }
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      const data = new FormData();
-      data.append('title', formData.title);
-      data.append('description', formData.description);
-      data.append('lat', formData.lat);
-      data.append('lng', formData.lng);
-      data.append('location_text', formData.location_text);
-      if (file) data.append('image', file);
-
-      await api.post('/complaint', data);
-      onRefresh();
-      onClose();
-    } catch (err) {
-      alert('Failed to report issue');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+const ComplaintCard = ({ complaint, onUpvote }) => {
+  const isPriority = complaint.priority === 'High' || complaint.priority === 'Critical';
+  const navigate = useNavigate();
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -5 }}
+      onClick={() => navigate(`/complaint/${complaint._id}`)}
+      className="glass" 
+      style={{ ...cardStyle, cursor: 'pointer' }}
     >
-      <motion.div 
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        className="glass" 
-        style={{ width: '100%', maxWidth: '600px', borderRadius: '32px', padding: '2.5rem' }}
-      >
-        <h3 style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>Report Community Issue</h3>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <input 
-            type="text" placeholder="Issue Title (e.g. Broken Street Light)" required 
-            style={inputStyle} onChange={e => setFormData({...formData, title: e.target.value})}
-          />
-          <textarea 
-            placeholder="Describe the problem in detail..." required 
-            style={{ ...inputStyle, minHeight: '120px', resize: 'none' }}
-            onChange={e => setFormData({...formData, description: e.target.value})}
-          />
-          <input 
-            type="text" placeholder="Location Landmark" required 
-            style={inputStyle} onChange={e => setFormData({...formData, location_text: e.target.value})}
-          />
-          
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <label className="btn btn-outline" style={{ flex: 1, justifyContent: 'center', cursor: 'pointer' }}>
-              <ImageIcon size={20} /> {file ? file.name : 'Upload Photo'}
-              <input type="file" hidden onChange={e => setFile(e.target.files[0])} />
-            </label>
-            <div style={{ flex: 1, color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-              <MapPin size={14} /> Coordinates: {formData.lat}, {formData.lng}
-            </div>
-          </div>
+      {/* Card Media */}
+      <div style={cardMediaStyle}>
+        {complaint.image_url ? (
+          <img src={complaint.image_url} alt={complaint.title} style={imageStyle} />
+        ) : (
+          <div style={imagePlaceholderStyle}>No Image Provided</div>
+        )}
+        <div style={cardBadgeOverlay}>
+          <StatusBadge status={complaint.status} />
+        </div>
+      </div>
 
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-            <button type="button" onClick={onClose} className="btn btn-outline" style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-            <button type="submit" disabled={submitting} className="btn btn-primary" style={{ flex: 2, justifyContent: 'center' }}>
-              {submitting ? 'Reporting...' : 'Submit Report'} <Send size={18} />
-            </button>
+      {/* Card Content */}
+      <div style={cardContentStyle}>
+        <div style={cardHeaderRow}>
+          <span style={{ ...categoryBadgeStyle, background: isPriority ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)', color: isPriority ? '#ef4444' : 'var(--text-muted)' }}>
+            {complaint.category} • {complaint.priority}
+          </span>
+          <span style={distanceStyle}>
+            <MapPin size={12} /> {(complaint.distance_km || 0).toFixed(1)} km away
+          </span>
+        </div>
+
+        <h4 style={cardTitleStyle}>{complaint.title}</h4>
+        
+        <div style={cardStatsRow}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+            <Clock size={14} /> {new Date(complaint.created_at).toLocaleDateString()}
           </div>
-        </form>
-      </motion.div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+             <button 
+              onClick={(e) => { e.stopPropagation(); onUpvote(); }}
+              style={{ ...upvoteButtonStyle, color: complaint.has_upvoted ? '#ff3040' : '#fff' }}
+             >
+               <ThumbsUp size={18} fill={complaint.has_upvoted ? 'currentColor' : 'none'} />
+               <span>{complaint.upvotes}</span>
+             </button>
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 };
 
-const getStatusColor = (status) => {
-  switch(status) {
-    case 'pending': return 'var(--warning)';
-    case 'approved': return 'var(--accent-blue)';
-    case 'assigned': return '#7c3aed';
-    case 'in_progress': return '#ec4899';
-    case 'resolved': return 'var(--success)';
-    default: return 'var(--text-muted)';
-  }
+// Styles
+const headerSectionStyle = {
+  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem'
 };
 
-const inputStyle = {
-  width: '100%',
-  padding: '1rem',
-  background: 'rgba(255, 255, 255, 0.05)',
-  border: '1px solid var(--border-glass)',
-  borderRadius: '12px',
-  color: 'white',
-  outline: 'none'
+const filterPanelStyle = {
+  background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-glass)',
+  borderRadius: '24px', padding: '1.5rem 2rem', marginBottom: '3rem', overflow: 'hidden'
 };
+
+const filterGroupStyle = {
+  display: 'flex', flexDirection: 'column', gap: '0.5rem'
+};
+
+const filterLabelStyle = {
+  fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase'
+};
+
+const selectStyle = {
+  background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-glass)',
+  borderRadius: '10px', color: '#fff', padding: '0.5rem 1rem', outline: 'none', minWidth: '180px'
+};
+
+const feedGridStyle = {
+  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '2rem'
+};
+
+const cardStyle = {
+  borderRadius: '24px', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column',
+  border: '1px solid var(--border-glass)', transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+};
+
+const cardMediaStyle = {
+  height: '220px', width: '100%', position: 'relative', background: '#111'
+};
+
+const imageStyle = {
+  width: '100%', height: '100%', objectFit: 'cover'
+};
+
+const imagePlaceholderStyle = {
+  width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333'
+};
+
+const cardBadgeOverlay = {
+  position: 'absolute', top: '1rem', left: '1rem'
+};
+
+const cardContentStyle = {
+  padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column'
+};
+
+const cardHeaderRow = {
+  display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'
+};
+
+const categoryBadgeStyle = {
+  fontSize: '0.7rem', fontWeight: 700, padding: '0.3rem 0.6rem', borderRadius: '6px', textTransform: 'uppercase'
+};
+
+const distanceStyle = {
+  fontSize: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 600
+};
+
+const cardTitleStyle = {
+  fontSize: '1.2rem', fontWeight: 700, marginBottom: '1.5rem', lineHeight: '1.4'
+};
+
+const cardStatsRow = {
+  marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+  paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)'
+};
+
+const upvoteButtonStyle = {
+  background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px',
+  padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.6rem',
+  cursor: 'pointer', transition: '0.2s', fontWeight: 700
+};
+
+const emptyStateStyle = {
+  gridColumn: '1 / -1', textAlign: 'center', padding: '8rem 2rem', opacity: 0.8
+};
+
+
 
 export default CitizenDashboard;
-

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, Depends, UploadFile, File, Form
-from db.database import complaints_collection, upvotes_collection, users_collection
+from db.database import complaints_collection, upvotes_collection, users_collection ,ai_logs_collection
 from utils.dependencies import get_current_user
 from datetime import datetime, timezone
 from bson import ObjectId
@@ -37,25 +37,25 @@ def calculate_distance(lat1, lng1, lat2, lng2):
 
 # 🔥 CREATE COMPLAINT
 @router.post("/complaint")
-
 async def create_complaint(
     title: str = Form(...),
     description: str = Form(...),
     lat: float = Form(...),
     lng: float = Form(...),
     location_text: str = Form(None),
-    image: UploadFile = File(None),
+    image: UploadFile = File(...),  # 🔥 make image compulsory
     current_user: dict = Depends(get_current_user)
 ):
 
+    from utils.ai_classifier import classify_complaint
+
     now = datetime.now(timezone.utc)
 
-    image_url = None
+    # 🔥 upload image (mandatory now)
+    upload_result = cloudinary.uploader.upload(image.file)
+    image_url = upload_result["secure_url"]
 
-    if image:
-        upload_result = cloudinary.uploader.upload(image.file)
-        image_url = upload_result["secure_url"]
-
+    # 🔥 initial complaint (temporary state)
     complaint_dict = {
         "title": title,
         "description": description,
@@ -65,25 +65,89 @@ async def create_complaint(
             "coordinates": [lng, lat]
         },
         "image_url": image_url,
-        "status": "pending",
+        "status": "processing",  # 🔥 new status
         "created_at": now,
         "upvotes": 0,
         "user_id": current_user["user_id"],
         "logs": [
             {
-                "status": "pending",
+                "status": "processing",
                 "time": now
             }
         ]
     }
 
     result = await complaints_collection.insert_one(complaint_dict)
+    complaint_id = result.inserted_id
+
+    # 🔥 STEP 1: AI classification
+    ai_result = await classify_complaint(title, description, image_url)
+
+    # 🔥 STEP 2: AI decision
+    if not ai_result.get("image_match", False):
+
+        await complaints_collection.update_one(
+            {"_id": complaint_id},
+            {
+                "$set": {
+                    "status": "rejected",
+                    "rejection_reason": "Image does not match complaint"
+                },
+                "$push": {
+                    "logs": {
+                        "status": "rejected",
+                        "time": datetime.now(timezone.utc),
+                        "by": "AI"
+                    }
+                }
+            }
+        )
+
+        return {"message": "Complaint rejected by AI"}
+
+    # 🔥 STEP 3: find authority
+    authority = await users_collection.find_one({
+        "role": "authority",
+        "department": ai_result.get("department")
+    })
+
+    # 🔥 STEP 4: update complaint (auto approve + assign)
+    await complaints_collection.update_one(
+        {"_id": complaint_id},
+        {
+            "$set": {
+                "status": "assigned",
+                "category": ai_result.get("category"),
+                "priority": ai_result.get("priority"),
+                "department": ai_result.get("department"),
+                "assigned_to": str(authority["_id"]) if authority else None
+            },
+            "$push": {
+                "logs": {
+                    "status": "assigned",
+                    "time": datetime.now(timezone.utc),
+                    "by": "AI"
+                }
+            }
+        }
+    )
+
+    # 🔥 STEP 5: AI logging
+    await ai_logs_collection.insert_one({
+        "complaint_id": str(complaint_id),
+        "image_match": ai_result.get("image_match"),
+        "category": ai_result.get("category"),
+        "priority": ai_result.get("priority"),
+        "confidence": ai_result.get("confidence"),
+        "timestamp": datetime.now(timezone.utc),
+        "actual_outcome": None
+    })
 
     return {
-        "message": "Complaint created successfully",
-        "complaint_id": str(result.inserted_id)
+        "message": "Complaint processed successfully",
+        "complaint_id": str(complaint_id),
+        "ai_result": ai_result  # optional (good for testing)
     }
-
 
 # 🔥 GET COMPLAINTS (GEO + DISTANCE + HAS_UPVOTED)
 @router.get("/complaints")
@@ -136,6 +200,17 @@ async def get_all_complaints(
         "limit": limit,
         "data": complaints
     }
+
+
+# 🔥 GET SINGLE COMPLAINT
+@router.get("/complaint/{complaint_id}")
+async def get_complaint_detail(complaint_id: str):
+    complaint = await complaints_collection.find_one({"_id": ObjectId(complaint_id)})
+    if not complaint:
+        return {"error": "Complaint not found"}
+    
+    complaint["_id"] = str(complaint["_id"])
+    return complaint
 
 
 # 🔥 TOGGLE UPVOTE (DISTANCE RESTRICTED + SAFE)
