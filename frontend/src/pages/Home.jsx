@@ -110,8 +110,8 @@ const Home = () => {
         <section style={{ marginTop: '10rem', paddingBottom: '10rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
           <FeatureCard 
             icon={<Shield className="primary" />} 
-            title="Secure Reporting" 
-            desc="Encrypted reports directly to verified authorities and mediators."
+            title="Secure & Anonymous" 
+            desc="Encrypted reports directly to verified authorities."
           />
           <FeatureCard 
             icon={<MapPin style={{ color: '#ec4899' }} />} 

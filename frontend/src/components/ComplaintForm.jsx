@@ -122,7 +122,7 @@ const ComplaintForm = ({ onClose, onRefresh }) => {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div className="form-grid">
             <div style={inputGroupStyle}>
               <label style={labelStyle}>Live Photo *</label>
               <label style={cameraLabelStyle}>
@@ -135,7 +135,7 @@ const ComplaintForm = ({ onClose, onRefresh }) => {
                   </div>
                 )}
                 <input 
-                  type="file" accept="image/*" capture="camera" 
+                  type="file" accept="image/*" capture="environment" 
                   hidden required onChange={handleFileChange} 
                 />
               </label>

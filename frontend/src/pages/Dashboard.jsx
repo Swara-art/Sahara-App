@@ -28,8 +28,8 @@ const Dashboard = () => {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#000', color: '#fff' }}>
-      {/* Sidebar */}
-      <aside className="glass" style={{ 
+      {/* Sidebar (Desktop) */}
+      <aside className="glass desktop-sidebar" style={{ 
         width: '280px', margin: '1rem', borderRadius: '24px', 
         display: 'flex', flexDirection: 'column', padding: '2rem 1.5rem',
         position: 'sticky', top: '1rem', height: 'calc(100vh - 2rem)'
@@ -67,7 +67,7 @@ const Dashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <main style={{ flex: 1, padding: '2rem 3rem 2rem 1rem', overflowY: 'auto' }}>
+      <main className="main-content" style={{ flex: 1, padding: '2rem 3rem 2rem 1rem', overflowY: 'auto' }}>
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
           <div>
             <h2 style={{ fontSize: '1.8rem' }}>Welcome, {user?.name || 'User'}</h2>
@@ -76,6 +76,9 @@ const Dashboard = () => {
           <div className="glass" style={{ padding: '0.5rem 1.5rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }} />
             <span style={{ fontSize: '0.9rem' }}>{user?.email || ''}</span>
+            <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', marginLeft: '0.5rem' }} className="bottom-nav">
+               <LogOut size={16} />
+            </button>
           </div>
         </header>
 
@@ -89,6 +92,22 @@ const Dashboard = () => {
           <Route path="/full-map" element={<MapView />} />
         </Routes>
       </main>
+
+      {/* Bottom Navigation (Mobile) */}
+      <nav className="bottom-nav">
+        {user?.role === 'citizen' && (
+          <>
+            <BottomNavLink to="/dashboard" icon={<LayoutDashboard size={22} />} label="Home" />
+            <BottomNavLink to="/dashboard/feed" icon={<Newspaper size={22} />} label="Feed" />
+            <BottomNavLink to="/dashboard/activity" icon={<Activity size={22} />} label="Activity" />
+            <BottomNavLink to="/dashboard/rewards" icon={<Ticket size={22} />} label="Rewards" />
+          </>
+        )}
+        {user?.role === 'authority' && (
+          <BottomNavLink to="/dashboard" icon={<ListTodo size={22} />} label="Tasks" />
+        )}
+        <BottomNavLink to="/dashboard/profile" icon={<UserIcon size={22} />} label="Profile" />
+      </nav>
     </div>
   );
 };
@@ -103,6 +122,18 @@ const SidebarLink = ({ to, icon, label }) => (
     <span style={{ fontWeight: 500 }}>{label}</span>
   </Link>
 );
+
+const BottomNavLink = ({ to, icon, label }) => {
+  // Check if active (simple string matching for now)
+  const isActive = window.location.pathname === to || (to !== '/dashboard' && window.location.pathname.startsWith(to));
+  
+  return (
+    <Link to={to} className={`bottom-nav-item ${isActive ? 'active' : ''}`}>
+      {icon}
+      <span>{label}</span>
+    </Link>
+  );
+};
 
 const RoleDispatcher = ({ role }) => {
   switch(role) {

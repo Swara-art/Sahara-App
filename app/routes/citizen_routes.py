@@ -362,3 +362,28 @@ async def search_nearby_complaints(
         final_complaints.append(c)
 
     return final_complaints
+
+
+@router.delete("/complaint/{complaint_id}")
+async def delete_complaint(
+    complaint_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    # Only the complaint owner can delete
+    complaint = await complaints_collection.find_one({"_id": ObjectId(complaint_id)})
+    
+    if not complaint:
+        return {"error": "Complaint not found"}
+    
+    if complaint["user_id"] != current_user["user_id"]:
+        return {"error": "Not authorized"}
+    
+    if complaint["status"] != "pending" and complaint["status"] != "rejected":
+        return {"error": "Cannot delete an active complaint"}
+
+    # Cascade deletes
+    await complaints_collection.delete_one({"_id": ObjectId(complaint_id)})
+    await upvotes_collection.delete_many({"complaint_id": complaint_id})
+    await ai_logs_collection.delete_many({"complaint_id": complaint_id})
+
+    return {"message": "Complaint deleted"}

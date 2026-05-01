@@ -15,6 +15,7 @@ async def get_vouchers():
 
     return vouchers
 
+
 @router.post("/vouchers/buy/{voucher_id}")
 async def buy_voucher(
     voucher_id: str,

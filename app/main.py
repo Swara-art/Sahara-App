@@ -10,6 +10,7 @@ app = FastAPI(title="Sahara AI Backend", description="AI-Driven Civic Complaint 
 
 # 🔥 CORS CONFIGURATION
 origins = [
+    "http://10.88.154.145:5173",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
@@ -23,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🔥 ROUTES (Admin and Mediator removed in favor of AI-driven architecture)
+# 🔥 ROUTES
 app.include_router(user_router, tags=["Authentication"])
 app.include_router(citizen_router, tags=["Citizen Operations"])
 app.include_router(authority_router, tags=["Authority Operations"])
